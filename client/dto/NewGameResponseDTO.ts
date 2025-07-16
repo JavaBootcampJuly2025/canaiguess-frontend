@@ -1,3 +1,3 @@
 export interface NewGameResponseDTO {
-  gameId: string;
+  gameId: number;
 }
