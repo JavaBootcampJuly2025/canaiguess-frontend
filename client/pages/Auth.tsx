@@ -22,26 +22,37 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const email = (document.getElementById("email") as HTMLInputElement).value;
+    const username = (document.getElementById("username") as HTMLInputElement).value;
     const password = (document.getElementById("password") as HTMLInputElement).value;
-    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/authenticate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include", // 👈 allows cookies/session
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (response.ok) {
         // Login success
-        navigate("/menu");
-      } else {
-        // Login failed
-        const message = await response.text();
-        alert("Login failed: " + message);
+        if (response.ok) {
+          const data = await response.json(); 
+          const token = data.token;
+
+          if (token) {
+            localStorage.setItem("token", token);
+            localStorage.setItem("username", username);
+            navigate("/menu");
+          } else {
+            alert("Login succeeded but no token returned.");
+          }
+        } else {
+          // Login failed
+          const message = await response.text();
+          alert("Login failed: " + message);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -63,10 +74,10 @@ export default function LoginPage() {
     const username = (document.getElementById("username") as HTMLInputElement).value;
     const email = (document.getElementById("registerEmail") as HTMLInputElement).value;
     const password = (document.getElementById("registerPassword") as HTMLInputElement).value;
-    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -202,13 +213,13 @@ export default function LoginPage() {
                 <CardContent>
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">
-                        Email
+                      <Label htmlFor="username" className="text-sm font-medium">
+                        Username
                       </Label>
                       <Input
-                        id="email"
-                        type="email"
-                        placeholder="neural.detective@example.com"
+                        id="username"
+                        type="username"
+                        placeholder="BestGuesser"
                         required
                         className="bg-background/50 h-11 text-base sm:text-sm"
                       />

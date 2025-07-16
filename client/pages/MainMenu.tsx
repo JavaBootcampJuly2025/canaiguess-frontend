@@ -32,46 +32,53 @@ import {
   Target,
   BarChart3,
   User,
-  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {NewGameResponseDTO} from "@/dto/NewGameResponseDTO";
 
 export default function MainMenu() {
   // Default values for new game
-  var [gameMode, setGameMode] = useState("single");
-  var [batches, setBatches] = useState("10");
+  var [batchSize, setbatchSize] = useState("1");
+  var [batchCount, setBatchCount] = useState("10");
   var [difficulty, setDifficulty] = useState("50");
   var [isLoading, setIsLoading] = useState(false);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
-
+  const username = localStorage.getItem("username");
   const handleStartGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setIsDialogOpen(false);
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    console.log("Starting game:", { gameMode, batches, difficulty });
+    console.log("Starting game:", { batchSize, batchCount, difficulty });
+    const token = localStorage.getItem("token");
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/game`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
-        credentials: "include",
         body: JSON.stringify({
-          gameMode,
-          batches,
+          batchCount,
+          batchSize,
           difficulty,
         }),
       });
 
       if (response.ok) {
         console.log("New game created!");
+        // parse the response to get the DTO
+        const data: NewGameResponseDTO = await response.json();
+        // Navigate to the new game with id
+        navigate("/game/" + data.gameId);
       } else {
         console.error("Game not created:", await response.text());
       }
+      
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -163,7 +170,7 @@ export default function MainMenu() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <User className="w-4 h-4" />
-              <span>Neural Detective</span>
+              <span>{username}</span>
             </div>
             <Button
               variant="outline"
@@ -236,16 +243,16 @@ export default function MainMenu() {
                             Game Mode
                           </Label>
                           <RadioGroup
-                            value={gameMode}
-                            onValueChange={setGameMode}
+                            value={batchSize}
+                            onValueChange={setbatchSize}
                           >
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                              <RadioGroupItem value="single" id="single" />
+                              <RadioGroupItem value="1" id="single" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Image className="w-5 h-5 text-ai-glow" />
                                 <div>
                                   <Label
-                                    htmlFor="single"
+                                    htmlFor="1"
                                     className="cursor-pointer font-medium"
                                   >
                                     Single Image
@@ -257,12 +264,12 @@ export default function MainMenu() {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                              <RadioGroupItem value="pair" id="pair" />
+                              <RadioGroupItem value="2" id="pair" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Images className="w-5 h-5 text-human-glow" />
                                 <div>
                                   <Label
-                                    htmlFor="pair"
+                                    htmlFor="2"
                                     className="cursor-pointer font-medium"
                                   >
                                     Image Pair
@@ -274,12 +281,12 @@ export default function MainMenu() {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                              <RadioGroupItem value="group" id="group" />
+                              <RadioGroupItem value="4" id="group" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Grid3X3 className="w-5 h-5 text-neural-purple" />
                                 <div>
                                   <Label
-                                    htmlFor="group"
+                                    htmlFor="4"
                                     className="cursor-pointer font-medium"
                                   >
                                     Image Group
@@ -301,12 +308,12 @@ export default function MainMenu() {
                             Number of Rounds
                           </Label>
                           <Input
-                            id="batches"
+                            id="batchCount"
                             type="number"
                             min="1"
                             max="50"
-                            value={batches}
-                            onChange={(e) => setBatches(e.target.value)}
+                            value={batchCount}
+                            onChange={(e) => setBatchCount(e.target.value)}
                             className="bg-background/50"
                           />
                         </div>
