@@ -81,29 +81,82 @@ export default function Game() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Mock function to fetch batch images - will replace with real API call
-  const fetchBatchImages = async (
-    batchNumber: number, batchSize: number,
-  ): Promise<ImageData[]> => {
-    setIsLoading(true);
+  // const fetchBatchImages = async (
+  //   batchNumber: number, batchSize: number,
+  // ): Promise<ImageData[]> => {
+  //   setIsLoading(true);
+  //
+  //   // Simulate API delay
+  //   await new Promise((resolve) => setTimeout(resolve, 1000));
+  //
+  //   // Mock image data based on game batchSize
+  //   const mockImages: ImageData[] = [];
+  //   const imageCount = batchSize;
+  //   console.log(batchSize);
+  //   for (let i = 0; i < imageCount; i++) {
+  //     mockImages.push({
+  //       id: `batch-${batchNumber}-image-${i + 1}`,
+  //       url: `https://picsum.photos/400/300?random=${batchNumber * 10 + i}`,
+  //       isAI: Math.random() > 0.5, // Random for now
+  //     });
+  //   }
+  //
+  //   setIsLoading(false);
+  //   return mockImages;
+  // };
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Mock image data based on game batchSize
-    const mockImages: ImageData[] = [];
-    const imageCount = batchSize;
-    console.log(batchSize);
-    for (let i = 0; i < imageCount; i++) {
-      mockImages.push({
-        id: `batch-${batchNumber}-image-${i + 1}`,
-        url: `https://picsum.photos/400/300?random=${batchNumber * 10 + i}`,
-        isAI: Math.random() > 0.5, // Random for now
-      });
+
+
+  const fetchBatchImages = async (): Promise<ImageData[]> => {
+    if (!gameId) {
+      console.error("Game ID is not defined.");
+      return [];
     }
 
-    setIsLoading(false);
-    return mockImages;
+    setIsLoading(true);
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/batch`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        console.error("Failed to fetch batch images:", await response.text());
+        return [];
+      }
+
+      const text = await response.text();
+      console.log("Raw API response:", text);
+
+      const data = JSON.parse(text);
+
+      if (!Array.isArray(data.images)) {
+        throw new Error("API response does not contain 'images' array.");
+      }
+
+      return data.images.map((url, index) => ({
+        id: `${gameId}-image-${index + 1}`,
+        url,
+        isAI: false,
+      }));
+    } catch (error) {
+      console.error("Error fetching batch images:", error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+
+
+
 
 
 
@@ -183,7 +236,7 @@ export default function Game() {
     if (game.currentImages.length === 0 &&
       gameConfig.batchSize != 0) {
       console.log("Passing initial batch size: " + gameConfig.batchSize);
-      fetchBatchImages(gameConfig.currentBatch, gameConfig.batchSize).then((images) => {
+      fetchBatchImages().then((images) => {
         setGame((prev) => ({
           ...prev,
           currentImages: images,
@@ -303,7 +356,7 @@ export default function Game() {
       }));
     } else {
       const nextBatch = gameConfig.currentBatch + 1;
-      const nextImages = await fetchBatchImages(nextBatch, gameConfig.batchSize);
+      const nextImages = await fetchBatchImages();
 
       setGameConfig((prev) => ({
         ...prev,
