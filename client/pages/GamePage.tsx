@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Bot, Brain, RotateCcw, Sparkles, Target, Trophy, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
+import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
 
 type GamePageParams = {
   gameId: string;
@@ -103,6 +105,56 @@ export default function Game() {
     return mockImages;
   };
 
+
+
+
+  const handleStartGame = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    let batchSize = gameConfig.batchSize;
+
+    let batchCount = gameConfig.batchCount;
+    let difficulty = gameConfig.difficulty;
+    console.log("Starting game:", { batchSize, batchCount, difficulty });
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/game`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          batchCount,
+          batchSize,
+          difficulty,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("New game created!");
+        // parse the response to get the DTO
+        const data: NewGameResponseDTO = await response.json();
+        // Navigate to the new game with id
+        navigate("/game/" + data.gameId);
+      } else {
+        console.error("Game not created:", await response.text());
+      }
+
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+    window.location.reload();
+  };
+
+
+
+
   useEffect(() => {
     const fetchGame = async () => {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -185,41 +237,79 @@ export default function Game() {
   };
 
   const submitGuesses = async () => {
+    if (!canSubmit()) return;
+
     setIsSubmitting(true);
 
-    // Simulate API submission
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    // For now, use local correctness check:
+    const guesses = game.userGuesses; // [{ imageId, guess }]
+    const correctChoices = game.currentImages; // [{ id, isAI }]
 
-    if (gameConfig.currentBatch >= gameConfig.batchCount) {
-      // Calculate final results
-      const totalCorrect = Math.floor(
-        Math.random() * gameConfig.batchCount * 0.8,
-      ); // Mock calculation
-      const totalImages =
-        gameConfig.batchCount * gameConfig.batchSize;
-      const accuracy = (totalCorrect / totalImages) * 100;
+    let batchCorrect = 0;
 
-      const result: GameResult = {
+    guesses.forEach((g) => {
+      const image = correctChoices.find((img) => img.id === g.imageId);
+      if (!image) return;
+
+      const isCorrect =
+        (g.guess === "ai" && image.isAI) ||
+        (g.guess === "real" && !image.isAI);
+
+      if (isCorrect) batchCorrect += 1;
+    });
+
+    // Update result running total
+    setGameResult((prev) => {
+      const totalCorrect = prev.correctGuesses + batchCorrect;
+      const totalFalse = prev.falseGuesses + (guesses.length - batchCorrect);
+      const totalImages = (gameConfig.batchSize * gameConfig.batchCount);
+      const accuracy = (totalCorrect / (totalCorrect + totalFalse)) * 100;
+      return {
         correctGuesses: totalCorrect,
-        falseGuesses: totalImages - totalCorrect,
+        falseGuesses: totalFalse,
         accuracy,
         score: Math.floor(accuracy * 10),
       };
+    });
 
+    // Will later send guesses to the backend:
+    /*
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const token = localStorage.getItem("token");
+    await fetch(`${API_BASE_URL}/api/game/${gameId}/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ guesses }),
+    });
+    */
+
+    // Show feedback toast
+    toast({
+      title: `Batch ${gameConfig.currentBatch} submitted!`,
+      description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
+    });
+
+    // End game if done, or fetch next
+    if (gameConfig.currentBatch >= gameConfig.batchCount) {
       setGame((prev) => ({
         ...prev,
-        result,
+        result: {
+          ...gameResult,
+          correctGuesses: gameResult.correctGuesses + batchCorrect,
+        },
       }));
     } else {
-      // Move to next batch
       const nextBatch = gameConfig.currentBatch + 1;
       const nextImages = await fetchBatchImages(nextBatch, gameConfig.batchSize);
-      console.log(gameConfig.currentBatch);
-      console.log("Current images:", game.currentImages);
+
       setGameConfig((prev) => ({
         ...prev,
         currentBatch: nextBatch,
       }));
+
       setGame((prev) => ({
         ...prev,
         currentBatch: nextBatch,
@@ -230,6 +320,7 @@ export default function Game() {
 
     setIsSubmitting(false);
   };
+
 
   const getImageGuess = (imageId: string): Guess => {
     return (
@@ -309,7 +400,7 @@ export default function Game() {
                   Back to Menu
                 </Button>
                 <Button
-                  onClick={() => window.location.reload()}
+                  onClick={handleStartGame}
                   variant="outline"
                   className="flex-1"
                 >

@@ -3,13 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -20,21 +14,21 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  BarChart3,
   Brain,
-  Sparkles,
-  Play,
-  Trophy,
-  LogOut,
+  Grid3X3,
   Image,
   Images,
-  Grid3X3,
-  Zap,
+  LogOut,
+  Play,
+  Sparkles,
   Target,
-  BarChart3,
+  Trophy,
   User,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {NewGameResponseDTO} from "@/dto/NewGameResponseDTO";
+import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
 
 export default function MainMenu() {
   // Default values for new game
@@ -78,7 +72,7 @@ export default function MainMenu() {
       } else {
         console.error("Game not created:", await response.text());
       }
-      
+
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -97,8 +91,10 @@ export default function MainMenu() {
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ai-glow/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-neural-purple/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-neural-purple/10 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Neural network pattern overlay */}
@@ -162,7 +158,8 @@ export default function MainMenu() {
               <Brain className="w-8 h-8 text-ai-glow" />
               <Sparkles className="w-4 h-4 text-human-glow absolute -top-1 -right-1 animate-pulse" />
             </div>
-            <div className="text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+            <div
+              className="text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
               CanAIGuess
             </div>
           </div>
@@ -202,7 +199,8 @@ export default function MainMenu() {
             {/* Main Action Cards */}
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {/* Play Game Card */}
-              <Card className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-ai-glow/10 transition-all duration-300">
+              <Card
+                className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-ai-glow/10 transition-all duration-300">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center space-x-2 text-xl">
                     <div className="p-2 rounded-lg bg-ai-glow/10">
@@ -246,7 +244,8 @@ export default function MainMenu() {
                             value={batchSize}
                             onValueChange={setbatchSize}
                           >
-                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                            <div
+                              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
                               <RadioGroupItem value="1" id="single" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Image className="w-5 h-5 text-ai-glow" />
@@ -263,7 +262,8 @@ export default function MainMenu() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                            <div
+                              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
                               <RadioGroupItem value="2" id="pair" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Images className="w-5 h-5 text-human-glow" />
@@ -280,7 +280,8 @@ export default function MainMenu() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                            <div
+                              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
                               <RadioGroupItem value="4" id="group" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Grid3X3 className="w-5 h-5 text-neural-purple" />
@@ -353,7 +354,8 @@ export default function MainMenu() {
               </Card>
 
               {/* Leaderboards Card */}
-              <Card className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-human-glow/10 transition-all duration-300">
+              <Card
+                className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-human-glow/10 transition-all duration-300">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center space-x-2 text-xl">
                     <div className="p-2 rounded-lg bg-human-glow/10">
