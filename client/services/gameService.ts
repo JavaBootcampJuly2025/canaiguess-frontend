@@ -15,10 +15,7 @@ export const fetchBatchImagesFromApi = async (gameId: string, token: string) => 
   if (!response.ok) {
     throw new Error(await response.text());
   }
-
   const text = await response.text();
-  console.log("Raw API response:", text);
-
   const data = JSON.parse(text);
 
   if (!Array.isArray(data.images)) {

@@ -24,7 +24,7 @@ const App = () => (
           <Route path="/" element={<Auth />} />
           <Route path="/menu" element={<MainMenu />} />
           <Route path="/game/:gameId" element={<GamePage />} />
-          <Route path="/game/:gameId/result/" element={<GameOver />} />
+          <Route path="/game/:gameId/results/" element={<GameOver />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

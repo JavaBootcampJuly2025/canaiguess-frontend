@@ -215,7 +215,7 @@ export default function Game() {
   const progress = ((gameConfig.currentBatch - 1) / gameConfig.batchCount) * 100;
 
   if (game.result) {
-    navigate(`/game/${gameId}/result/`, { state: { result: game.result } });
+    navigate(`/game/${gameId}/results/`, { state: { result: game.result } });
   }
 
   return (
