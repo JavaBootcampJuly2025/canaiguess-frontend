@@ -285,7 +285,7 @@ export default function Game() {
         throw new Error(await response.text());
       }
 
-      const result: { results: boolean[] } = await response.json();
+      const result: { correct: boolean[] } = await response.json();
       const batchCorrect = result.correct.filter(Boolean).length;
 
       setGameResult((prev) => {
@@ -394,7 +394,9 @@ export default function Game() {
                 </div>
                 <div className="p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
                   <div className="text-2xl font-bold text-human-glow">
-                    {((game.result.correctGuesses / (gameConfig.batchSize * gameConfig.batchCount)).toFixed(1)) * 100}%
+                    {(
+                      (game.result.correctGuesses / (gameConfig.batchSize * gameConfig.batchCount)) * 100
+                    ).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">Accuracy</div>
                 </div>
