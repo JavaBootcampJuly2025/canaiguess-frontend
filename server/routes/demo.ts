@@ -1,9 +1,7 @@
 import { RequestHandler } from "express";
-import { DemoResponse } from "@shared/api";
 
+// I don't know why, but if you delete this everything breaks, 
+// so better just leave it be for now :D
 export const handleDemo: RequestHandler = (req, res) => {
-  const response: DemoResponse = {
-    message: "Hello from Express server",
-  };
-  res.status(200).json(response);
+
 };
