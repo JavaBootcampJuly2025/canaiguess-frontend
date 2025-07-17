@@ -1,59 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Bot, Brain, RotateCcw, Sparkles, Target, Trophy, User, Zap } from "lucide-react";
+import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
-import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
-
-type GamePageParams = {
-  gameId: string;
-};
-
-type Guess = true | false;
-
-interface GuessEntry {
-  imageId: string;
-  guess: Guess;
-}
-
-interface GuessEntry {
-  imageId: string;
-  guess: Guess;
-}
-
-type GameResult = {
-  score: number;
-  correctGuesses: number;
-  falseGuesses: number;
-  accuracy: number;
-};
-type ImageData = {
-  id: string;
-  url: string;
-  isAI: boolean;
-};
-
-type GameConfig = {
-  batchSize: number;
-  batchCount: number;
-  currentBatch: number;
-  difficulty: number;
-};
-
-interface GameInstance {
-  currentImages: ImageData[];
-  userGuesses: GuessEntry[];
-  result: GameResult | null;
-  currentBatch?: number;
-}
+import { GamePageParams, GameConfig, GameInstance, GameResult, Guess } from "@/types/Game";
+import { fetchBatchImagesFromApi, submitGuessesRequest } from "@/services/gameService";
 
 export default function Game() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { gameId } = useParams<GamePageParams>();
   // get the game instance or create default
   const [gameConfig, setGameConfig] = useState<GameConfig>({
@@ -70,7 +28,7 @@ export default function Game() {
     accuracy: 0,
   });
 
-  const [game, setGame] = useState<GameInstance>({
+  const [game, setGameInstance] = useState<GameInstance>({
     currentImages: [],
     userGuesses: [],
     result: null,
@@ -80,45 +38,17 @@ export default function Game() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
-
-  const fetchBatchImages = async (): Promise<ImageData[]> => {
+  const fetchBatchImages = async () => {
     if (!gameId) {
       console.error("Game ID is not defined.");
       return [];
     }
 
     setIsLoading(true);
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/batch`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Failed to fetch batch images:", await response.text());
-        return [];
-      }
-
-      const text = await response.text();
-      console.log("Raw API response:", text);
-
-      const data = JSON.parse(text);
-
-      if (!Array.isArray(data.images)) {
-        throw new Error("API response does not contain 'images' array.");
-      }
-
-      return data.images.map((url, index) => ({
-        id: url,
-        url,
-      }));
+      return await fetchBatchImagesFromApi(gameId, token!);
     } catch (error) {
       console.error("Error fetching batch images:", error);
       return [];
@@ -126,56 +56,6 @@ export default function Game() {
       setIsLoading(false);
     }
   };
-
-
-
-
-  const handleStartGame = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    let batchSize = gameConfig.batchSize;
-
-    let batchCount = gameConfig.batchCount;
-    let difficulty = gameConfig.difficulty;
-    console.log("Starting game:", { batchSize, batchCount, difficulty });
-    const token = localStorage.getItem("token");
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/game`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          batchCount,
-          batchSize,
-          difficulty,
-        }),
-      });
-
-      if (response.ok) {
-        console.log("New game created!");
-        // parse the response to get the DTO
-        const data: NewGameResponseDTO = await response.json();
-        // Navigate to the new game with id
-        navigate("/game/" + data.gameId);
-      } else {
-        console.error("Game not created:", await response.text());
-      }
-
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-    window.location.reload();
-  };
-
-
-
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -205,7 +85,7 @@ export default function Game() {
       gameConfig.batchSize != 0) {
       console.log("Passing initial batch size: " + gameConfig.batchSize);
       fetchBatchImages().then((images) => {
-        setGame((prev) => ({
+        setGameInstance((prev) => ({
           ...prev,
           currentImages: images,
           userGuesses: [],
@@ -215,7 +95,7 @@ export default function Game() {
   }, [gameConfig.currentBatch, gameConfig.batchSize]);
 
   const handleImageGuess = (imageId: string, guess: Guess) => {
-    setGame((prev) => {
+    setGameInstance((prev) => {
       const existingGuessIndex = prev.userGuesses.findIndex(
         (g) => g.imageId === imageId,
       );
@@ -240,7 +120,7 @@ export default function Game() {
     });
   };
 
-  const canSubmit = () => {
+  const canSubmit = useMemo(() => {
     const requiredGuesses = game.currentImages.length;
     const madeGuesses = game.userGuesses.filter(
       (g) => g.guess !== null && g.guess !== undefined,
@@ -255,38 +135,24 @@ export default function Game() {
     }
 
     return madeGuesses === requiredGuesses;
-  };
+  }, [game]);
 
   const submitGuesses = async () => {
-    if (!canSubmit()) return;
+    if (!canSubmit) return;
 
     setIsSubmitting(true);
 
     const guesses = game.userGuesses;
     const correctChoices = game.currentImages;
-
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/guess`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-          body: JSON.stringify({
-            images: correctChoices.map((img) => img.id),
-            guesses: guesses.map((g) => g.guess),
-          }),
+      const result = await submitGuessesRequest(
+        correctChoices.map((img) => img.id),
+        guesses.map((g) => g.guess),
+        token
+      );
 
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      const result: { correct: boolean[] } = await response.json();
       const batchCorrect = result.correct.filter(Boolean).length;
 
       setGameResult((prev) => {
@@ -305,26 +171,26 @@ export default function Game() {
         title: `Batch ${gameConfig.currentBatch} submitted!`,
         description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
       });
-      
-    // End game if done, or fetch next
-    if (gameConfig.currentBatch >= gameConfig.batchCount) {
-      setGame((prev) => ({
-        ...prev,
-        result: {
-          ...gameResult,
-          correctGuesses: gameResult.correctGuesses + batchCorrect,
-        },
-      }));
-    } else {
-      const nextBatch = gameConfig.currentBatch + 1;
-      const nextImages = await fetchBatchImages();
 
+      if (gameConfig.currentBatch >= gameConfig.batchCount) {
+        setGameInstance((prev) => ({
+          ...prev,
+          result: {
+            ...gameResult,
+            correctGuesses: gameResult.correctGuesses + batchCorrect,
+          },
+        }));
+      } else {
+        const nextBatch = gameConfig.currentBatch + 1;
+        const nextImages = await fetchBatchImages();
+
+        // Both need to be updated!
         setGameConfig((prev) => ({
           ...prev,
           currentBatch: nextBatch,
         }));
 
-        setGame((prev) => ({
+        setGameInstance((prev) => ({
           ...prev,
           currentBatch: nextBatch,
           currentImages: nextImages,
@@ -342,100 +208,14 @@ export default function Game() {
     }
   };
 
-
-
-
-  const getImageGuess = (imageId: string): Guess | undefined => {
-    return game.userGuesses.find((g) => g.imageId === imageId)?.guess;
+  const getImageGuess = (imageId: string): boolean | null => {
+    return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
   };
 
   const progress = ((gameConfig.currentBatch - 1) / gameConfig.batchCount) * 100;
 
   if (game.result) {
-    return (
-      <div className="min-h-screen bg-background relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ai-glow/20 rounded-full blur-3xl animate-pulse"></div>
-          <div
-            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-
-        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl border-border/50 backdrop-blur-sm bg-card/80">
-            <CardContent className="p-8 text-center space-y-6">
-              <div className="flex items-center justify-center space-x-2 mb-6">
-                <div className="relative">
-                  <Brain className="w-12 h-12 text-ai-glow" />
-                  <Sparkles className="w-6 h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
-                </div>
-                <div
-                  className="text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
-                  CanAIGuess
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-center">
-                  <Trophy className="w-16 h-16 text-human-glow" />
-                </div>
-                <h1 className="text-3xl font-bold">Game Complete!</h1>
-                <p className="text-muted-foreground">
-                  You've completed your neural detection challenge
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-ai-glow/10 border border-ai-glow/20">
-                  <div className="text-2xl font-bold text-ai-glow">
-                    {game.result.correctGuesses}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Correct Guesses
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
-                  <div className="text-2xl font-bold text-human-glow">
-                    {(
-                      (game.result.correctGuesses / (gameConfig.batchSize * gameConfig.batchCount)) * 100
-                    ).toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">Accuracy</div>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-lg bg-neural-purple/10 border border-neural-purple/20">
-                <div className="text-3xl font-bold text-neural-purple mb-2">
-                  {game.result.score}
-                </div>
-                <div className="text-lg font-medium">Final Score</div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Out of {gameConfig.batchSize * gameConfig.batchCount} total images
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => navigate("/menu")}
-                  className="flex-1 bg-gradient-to-r from-ai-glow to-electric-blue hover:from-ai-glow/90 hover:to-electric-blue/90"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Menu
-                </Button>
-                <Button
-                  onClick={handleStartGame}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Play Again
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    navigate(`/game/${gameId}/result/`, { state: { result: game.result } });
   }
 
   return (
@@ -603,7 +383,7 @@ export default function Game() {
               <div className="flex justify-center">
                 <Button
                   onClick={submitGuesses}
-                  disabled={!canSubmit() || isSubmitting}
+                  disabled={!canSubmit || isSubmitting}
                   className={cn(
                     "px-8 py-3 text-lg font-semibold",
                     "bg-gradient-to-r from-human-glow to-cyber-green hover:from-human-glow/90 hover:to-cyber-green/90",
