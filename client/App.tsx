@@ -11,6 +11,7 @@ import MainMenu from "./pages/MainMenu";
 import GamePage from "./pages/GamePage";
 import NotFound from "./pages/NotFound";
 import GameOver from "./pages/GameOver";
+import Leaderboards from "./pages/Leaderboards";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Auth />} />
           <Route path="/menu" element={<MainMenu />} />
+          <Route path="/leaderboards" element={<Leaderboards />} />
           <Route path="/game/:gameId" element={<GamePage />} />
           <Route path="/game/:gameId/results/" element={<GameOver />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

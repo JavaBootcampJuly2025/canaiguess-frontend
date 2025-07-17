@@ -369,6 +369,7 @@ export default function MainMenu() {
                 </CardHeader>
                 <CardContent>
                   <Button
+                    onClick={() => navigate("/leaderboards")}
                     variant="outline"
                     className="w-full h-12 border-human-glow/30 hover:bg-human-glow/10 hover:border-human-glow/50 text-base font-semibold"
                   >
