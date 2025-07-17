@@ -11,9 +11,8 @@ export interface GuessEntry {
 
 // For now it's partially random, should be fetched from API
 export type GameResult = {
-  score: number;
-  correctGuesses: number;
-  falseGuesses: number;
+  correct: number;
+  incorrect: number;
   accuracy: number;
 };
 

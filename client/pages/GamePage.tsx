@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
-import { GamePageParams, GameConfig, GameInstance, GameResult, Guess } from "@/types/Game";
+import { GamePageParams, GameConfig, GameInstance, Guess } from "@/types/Game";
 import { fetchBatchImagesFromApi, submitGuessesRequest } from "@/services/gameService";
 
 export default function Game() {
@@ -19,13 +19,6 @@ export default function Game() {
     batchCount: 6,
     currentBatch: 0,
     difficulty: 0.5,
-  });
-
-  const [gameResult, setGameResult] = useState<GameResult>({
-    correctGuesses: 0,
-    score: 0,
-    falseGuesses: 0,
-    accuracy: 0,
   });
 
   const [game, setGameInstance] = useState<GameInstance>({
@@ -155,31 +148,13 @@ export default function Game() {
 
       const batchCorrect = result.correct.filter(Boolean).length;
 
-      setGameResult((prev) => {
-        const totalCorrect = prev.correctGuesses + batchCorrect;
-        const totalFalse = prev.falseGuesses + (guesses.length - batchCorrect);
-        const accuracy = (totalCorrect / (totalCorrect + totalFalse)) * 100;
-        return {
-          correctGuesses: totalCorrect,
-          falseGuesses: totalFalse,
-          accuracy,
-          score: Math.floor(accuracy * 10),
-        };
-      });
-
       toast({
         title: `Batch ${gameConfig.currentBatch} submitted!`,
         description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
       });
 
       if (gameConfig.currentBatch >= gameConfig.batchCount) {
-        setGameInstance((prev) => ({
-          ...prev,
-          result: {
-            ...gameResult,
-            correctGuesses: gameResult.correctGuesses + batchCorrect,
-          },
-        }));
+        navigate(`/game/${gameId}/results/`, { state: { result: game.result } });
       } else {
         const nextBatch = gameConfig.currentBatch + 1;
         const nextImages = await fetchBatchImages();
@@ -213,10 +188,6 @@ export default function Game() {
   };
 
   const progress = ((gameConfig.currentBatch - 1) / gameConfig.batchCount) * 100;
-
-  if (game.result) {
-    navigate(`/game/${gameId}/results/`, { state: { result: game.result } });
-  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">

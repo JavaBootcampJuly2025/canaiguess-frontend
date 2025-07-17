@@ -4,7 +4,8 @@ import { ArrowLeft, Brain, RotateCcw, Sparkles, Trophy,  } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, } from "react";
 import { createNewGame } from "@/services/gameService";
-import { GamePageParams, GameConfig, GameInstance, GameResult, Guess } from "@/types/Game";
+import { GamePageParams, GameConfig, GameResult } from "@/types/Game";
+import { fetchGameResults } from "@/services/gameService";
 
 // right now this load right after game end and receives gameId and result on load
 // on refresh the results are gone
@@ -12,9 +13,8 @@ import { GamePageParams, GameConfig, GameInstance, GameResult, Guess } from "@/t
 export default function GameOver({ }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const result = location.state?.result;
+  var [result, setResult] = useState<GameResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { gameId } = useParams<GamePageParams>();
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     batchSize: 0, //1 for single batchSize, 2 for pair, 4-6 for group
@@ -68,7 +68,59 @@ export default function GameOver({ }) {
     };
     fetchGame();
   }, [gameId]);
-  
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      console.log("Fetching game results for:", gameId);
+      const token = localStorage.getItem("token");
+      try {
+        const data = await fetchGameResults(gameId!, token!);
+        setResult(data);
+      } catch (error) {
+        console.error("Error fetching results:", error);
+      }
+    };
+
+    fetchResults();
+    console.log("Result: " + result);
+  }, [gameId]);
+  if (!result) return (
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background effects matching login page */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ai-glow/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <div className="text-center space-y-8 max-w-md">
+          {/* Logo matching login page */}
+          <div className="flex items-center justify-center space-x-2 mb-6">
+            <div className="relative">
+              <Brain className="w-12 h-12 text-ai-glow" />
+              <Sparkles className="w-6 h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+            </div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+              CanAIGuess
+            </div>
+          </div>
+
+          {/* 404 Content */}
+          <div className="space-y-4">
+            <div className="text-6xl font-bold bg-gradient-to-r from-neural-purple to-electric-blue bg-clip-text text-transparent">
+              Asking AI how you did...
+            </div>
+            <h1 className="text-2xl font-bold"></h1>
+          </div>
+
+          {/* Fun stats */}
+          <div className="text-center text-sm text-muted-foreground pt-4">
+            <p>Success detected with 98.3% confidence</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background effects */}
@@ -105,7 +157,7 @@ export default function GameOver({ }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-ai-glow/10 border border-ai-glow/20">
                 <div className="text-2xl font-bold text-ai-glow">
-                  {result.correctGuesses}
+                  {result ? result.correct : "Loading..."}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Correct Guesses
@@ -113,9 +165,8 @@ export default function GameOver({ }) {
               </div>
               <div className="p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
                 <div className="text-2xl font-bold text-human-glow">
-                  {(
-                    (result.correctGuesses / (gameConfig.batchSize * gameConfig.batchCount)) * 100
-                  ).toFixed(1)}%
+                  {result ? ((result.correct / (result.correct + result.incorrect)) * 100)
+                    .toFixed(1) + "%" : "Loading..."}
                 </div>
                 <div className="text-sm text-muted-foreground">Accuracy</div>
               </div>
@@ -123,7 +174,7 @@ export default function GameOver({ }) {
 
             <div className="p-6 rounded-lg bg-neural-purple/10 border border-neural-purple/20">
               <div className="text-3xl font-bold text-neural-purple mb-2">
-                {result.score}
+                {"NaN temp"}
               </div>
               <div className="text-lg font-medium">Final Score</div>
               <div className="text-sm text-muted-foreground mt-1">
