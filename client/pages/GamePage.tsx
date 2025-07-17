@@ -13,7 +13,7 @@ type GamePageParams = {
   gameId: string;
 };
 
-type Guess = "real" | "ai";
+type Guess = true | false;
 
 interface GuessEntry {
   imageId: string;
@@ -59,7 +59,7 @@ export default function Game() {
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     batchSize: 0, //1 for single batchSize, 2 for pair, 4-6 for group
     batchCount: 6,
-    currentBatch: 1,
+    currentBatch: 0,
     difficulty: 0.5,
   });
 
@@ -79,32 +79,6 @@ export default function Game() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Mock function to fetch batch images - will replace with real API call
-  // const fetchBatchImages = async (
-  //   batchNumber: number, batchSize: number,
-  // ): Promise<ImageData[]> => {
-  //   setIsLoading(true);
-  //
-  //   // Simulate API delay
-  //   await new Promise((resolve) => setTimeout(resolve, 1000));
-  //
-  //   // Mock image data based on game batchSize
-  //   const mockImages: ImageData[] = [];
-  //   const imageCount = batchSize;
-  //   console.log(batchSize);
-  //   for (let i = 0; i < imageCount; i++) {
-  //     mockImages.push({
-  //       id: `batch-${batchNumber}-image-${i + 1}`,
-  //       url: `https://picsum.photos/400/300?random=${batchNumber * 10 + i}`,
-  //       isAI: Math.random() > 0.5, // Random for now
-  //     });
-  //   }
-  //
-  //   setIsLoading(false);
-  //   return mockImages;
-  // };
-
 
 
 
@@ -142,9 +116,8 @@ export default function Game() {
       }
 
       return data.images.map((url, index) => ({
-        id: `${gameId}-image-${index + 1}`,
+        id: url,
         url,
-        isAI: false,
       }));
     } catch (error) {
       console.error("Error fetching batch images:", error);
@@ -153,10 +126,6 @@ export default function Game() {
       setIsLoading(false);
     }
   };
-
-
-
-
 
 
 
@@ -222,7 +191,6 @@ export default function Game() {
         setGameConfig(data);
         if (data.currentBatch == 0)
           data.currentBatch = 1;
-        console.log(data);
       } else {
         console.error("Game not found");
       }
@@ -260,10 +228,10 @@ export default function Game() {
         newGuesses.push({ imageId, guess });
       }
 
-      // For pair batchSize, ensure only one can be AI
-      if (gameConfig.batchSize === 2 && guess === "ai") {
+      // for pair, enforce only one AI guess
+      if (gameConfig.batchSize === 2 && guess === true) {
         newGuesses = newGuesses.map((g) =>
-          g.imageId !== imageId ? { ...g, guess: "real" } : g,
+          g.imageId !== imageId ? { ...g, guess: false } : g,
         );
       }
 
@@ -275,13 +243,13 @@ export default function Game() {
   const canSubmit = () => {
     const requiredGuesses = game.currentImages.length;
     const madeGuesses = game.userGuesses.filter(
-      (g) => g.guess !== null,
+      (g) => g.guess !== null && g.guess !== undefined,
     ).length;
 
     if (gameConfig.batchSize === 2) {
       // For pairs, exactly one should be marked as AI
       const aiGuesses = game.userGuesses.filter(
-        (g) => g.guess === "ai",
+        (g) => g.guess === true,
       ).length;
       return aiGuesses === 1 && madeGuesses === 2;
     }
@@ -294,57 +262,50 @@ export default function Game() {
 
     setIsSubmitting(true);
 
-    // For now, use local correctness check:
-    const guesses = game.userGuesses; // [{ imageId, guess }]
-    const correctChoices = game.currentImages; // [{ id, isAI }]
+    const guesses = game.userGuesses;
+    const correctChoices = game.currentImages;
 
-    let batchCorrect = 0;
-
-    guesses.forEach((g) => {
-      const image = correctChoices.find((img) => img.id === g.imageId);
-      if (!image) return;
-
-      const isCorrect =
-        (g.guess === "ai" && image.isAI) ||
-        (g.guess === "real" && !image.isAI);
-
-      if (isCorrect) batchCorrect += 1;
-    });
-
-    // Update result running total
-    setGameResult((prev) => {
-      const totalCorrect = prev.correctGuesses + batchCorrect;
-      const totalFalse = prev.falseGuesses + (guesses.length - batchCorrect);
-      const totalImages = (gameConfig.batchSize * gameConfig.batchCount);
-      const accuracy = (totalCorrect / (totalCorrect + totalFalse)) * 100;
-      return {
-        correctGuesses: totalCorrect,
-        falseGuesses: totalFalse,
-        accuracy,
-        score: Math.floor(accuracy * 10),
-      };
-    });
-
-    // Will later send guesses to the backend:
-    /*
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("token");
-    await fetch(`${API_BASE_URL}/api/game/${gameId}/submit`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ guesses }),
-    });
-    */
 
-    // Show feedback toast
-    toast({
-      title: `Batch ${gameConfig.currentBatch} submitted!`,
-      description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/guess`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+          body: JSON.stringify({
+            images: correctChoices.map((img) => img.id),
+            guesses: guesses.map((g) => g.guess),
+          }),
 
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const result: { correct: boolean[] } = await response.json();
+      const batchCorrect = result.correct.filter(Boolean).length;
+
+      setGameResult((prev) => {
+        const totalCorrect = prev.correctGuesses + batchCorrect;
+        const totalFalse = prev.falseGuesses + (guesses.length - batchCorrect);
+        const accuracy = (totalCorrect / (totalCorrect + totalFalse)) * 100;
+        return {
+          correctGuesses: totalCorrect,
+          falseGuesses: totalFalse,
+          accuracy,
+          score: Math.floor(accuracy * 10),
+        };
+      });
+
+      toast({
+        title: `Batch ${gameConfig.currentBatch} submitted!`,
+        description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
+      });
+      
     // End game if done, or fetch next
     if (gameConfig.currentBatch >= gameConfig.batchCount) {
       setGame((prev) => ({
@@ -358,27 +319,34 @@ export default function Game() {
       const nextBatch = gameConfig.currentBatch + 1;
       const nextImages = await fetchBatchImages();
 
-      setGameConfig((prev) => ({
-        ...prev,
-        currentBatch: nextBatch,
-      }));
+        setGameConfig((prev) => ({
+          ...prev,
+          currentBatch: nextBatch,
+        }));
 
-      setGame((prev) => ({
-        ...prev,
-        currentBatch: nextBatch,
-        currentImages: nextImages,
-        userGuesses: [],
-      }));
+        setGame((prev) => ({
+          ...prev,
+          currentBatch: nextBatch,
+          currentImages: nextImages,
+          userGuesses: [],
+        }));
+      }
+    } catch (error) {
+      console.error("Error submitting guesses:", error);
+      toast({
+        title: "Error submitting guesses",
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
 
-  const getImageGuess = (imageId: string): Guess => {
-    return (
-      game.userGuesses.find((g) => g.imageId === imageId)?.guess || null
-    );
+
+
+  const getImageGuess = (imageId: string): Guess | undefined => {
+    return game.userGuesses.find((g) => g.imageId === imageId)?.guess;
   };
 
   const progress = ((gameConfig.currentBatch - 1) / gameConfig.batchCount) * 100;
@@ -428,7 +396,9 @@ export default function Game() {
                 </div>
                 <div className="p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
                   <div className="text-2xl font-bold text-human-glow">
-                    {(game.result.correctGuesses / (gameConfig.batchSize * gameConfig.batchCount)).toFixed(1)}%
+                    {(
+                      (game.result.correctGuesses / (gameConfig.batchSize * gameConfig.batchCount)) * 100
+                    ).toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground">Accuracy</div>
                 </div>
@@ -593,13 +563,13 @@ export default function Game() {
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant={
-                            getImageGuess(image.id) === "ai"
+                            getImageGuess(image.id) === true
                               ? "default"
                               : "outline"
                           }
-                          onClick={() => handleImageGuess(image.id, "ai")}
+                          onClick={() => handleImageGuess(image.id, true)}
                           className={cn(
-                            getImageGuess(image.id) === "ai" &&
+                            getImageGuess(image.id) === true &&
                             "bg-ai-glow hover:bg-ai-glow/90 text-white",
                           )}
                         >
@@ -608,13 +578,13 @@ export default function Game() {
                         </Button>
                         <Button
                           variant={
-                            getImageGuess(image.id) === "real"
+                            getImageGuess(image.id) === false
                               ? "default"
                               : "outline"
                           }
-                          onClick={() => handleImageGuess(image.id, "real")}
+                          onClick={() => handleImageGuess(image.id, false)}
                           className={cn(
-                            getImageGuess(image.id) === "real" &&
+                            getImageGuess(image.id) === false &&
                             "bg-human-glow hover:bg-human-glow/90 text-white",
                           )}
                         >
