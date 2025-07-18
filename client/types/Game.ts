@@ -9,17 +9,18 @@ export interface GuessEntry {
   guess: Guess;
 }
 
-// For now it's partially random, should be fetched from API
-export type GameResult = {
-  correct: number;
-  incorrect: number;
-  accuracy: number;
-};
-
 export type ImageData = {
   id: string;
   url: string;
   isAI: boolean;
+};
+
+// For now it's partially random, should be fetched from API
+export type GameResult = {
+  // score: number;
+  correct: number;
+  incorrect: number;
+  accuracy: number;
 };
 
 // Data fetched from the API
@@ -37,3 +38,15 @@ export interface GameInstance {
   result: GameResult | null;
   currentBatch?: number;
 }
+
+type RecentGame = {
+  id: string;
+  gameMode: "single" | "pair" | "group";
+  score: number;
+  accuracy: number;
+  totalImages: number;
+  correctGuesses: number;
+  difficulty: number;
+  playedAt: string;
+  duration: number; // in seconds
+};
