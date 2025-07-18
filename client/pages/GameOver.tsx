@@ -175,7 +175,7 @@ export default function GameOver({ }) {
 
             <div className="p-6 rounded-lg bg-neural-purple/10 border border-neural-purple/20">
               <div className="text-3xl font-bold text-neural-purple mb-2">
-                {result.correct * (10 + (2 * result.accuracy))}
+                {result.score}
               </div>
               <div className="text-lg font-medium">Final Score</div>
               <div className="text-sm text-muted-foreground mt-1">

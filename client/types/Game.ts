@@ -21,6 +21,7 @@ export type GameResult = {
   correct: number;
   incorrect: number;
   accuracy: number;
+  score: number;
 };
 
 // Data fetched from the API
