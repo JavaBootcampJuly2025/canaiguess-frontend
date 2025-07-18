@@ -84,6 +84,7 @@ export default function GameOver({ }) {
     fetchResults();
     console.log("Result: " + result);
   }, [gameId]);
+
   if (!result) return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background effects matching login page */}
@@ -174,11 +175,11 @@ export default function GameOver({ }) {
 
             <div className="p-6 rounded-lg bg-neural-purple/10 border border-neural-purple/20">
               <div className="text-3xl font-bold text-neural-purple mb-2">
-                {"NaN temp"}
+                {result.correct * (10 + (2 * result.accuracy))}
               </div>
               <div className="text-lg font-medium">Final Score</div>
               <div className="text-sm text-muted-foreground mt-1">
-                Out of {gameConfig.batchSize * gameConfig.batchCount} total images
+                You went through {gameConfig.batchSize * gameConfig.batchCount} total images
               </div>
             </div>
 

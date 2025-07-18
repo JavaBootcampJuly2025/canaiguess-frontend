@@ -64,14 +64,13 @@ export const submitGuessesRequest = async (
 ): Promise<{ correct: boolean[] }> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const response = await fetch(`${API_BASE_URL}/api/guess`, {
+  const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/guess`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      gameId: gameId,
       guesses: guesses,
     }),
   });
