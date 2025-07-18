@@ -57,7 +57,7 @@ export const createNewGame = async (
 };
 
 export const submitGuessesRequest = async (
-  imageIds: string[],
+  gameId: number,
   guesses: boolean[],
   token: string | null
 ): Promise<{ correct: boolean[] }> => {
@@ -70,7 +70,7 @@ export const submitGuessesRequest = async (
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      images: imageIds,
+      gameId: gameId,
       guesses: guesses,
     }),
   });

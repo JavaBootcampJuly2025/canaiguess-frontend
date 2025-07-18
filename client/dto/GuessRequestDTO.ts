@@ -1,4 +1,4 @@
 export interface GuessRequestDTO {
-  images: string[];
+  gameId; number;
   guesses: boolean[];
 }

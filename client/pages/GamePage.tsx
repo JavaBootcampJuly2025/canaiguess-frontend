@@ -145,10 +145,12 @@ export default function Game() {
     const guesses = game.userGuesses;
     const correctChoices = game.currentImages;
     const token = localStorage.getItem("token");
+    // const gameId; // or gameConfig.gameId;
+
 
     try {
       const result = await submitGuessesRequest(
-        correctChoices.map((img) => img.id),
+        Number(gameId),
         guesses.map((g) => g.guess),
         token
       );
