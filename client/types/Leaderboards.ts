@@ -51,6 +51,13 @@ export interface LeaderboardEntry {
   isCurrentUser?: boolean;
 }
 
+export interface Leaderboard {
+  type: LeaderboardType;
+  entries: LeaderboardEntry[];
+  totalPlayers: number;
+  lastUpdated: string;
+}
+
 export type LeaderboardType =
   | "global"
   | "weekly"

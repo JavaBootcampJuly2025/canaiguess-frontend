@@ -24,7 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Leaderboard, RecentGame, SkillTier, UserStats } from "@/types/Leaderboards";
+import { Leaderboard, RecentGame, UserStats } from "@/types/Leaderboards";
 import {generateFakeGames} from "@/services/mockImageData";
 import {fetchGlobalLeaderboard} from "@/services/leaderboardsService";
 
@@ -85,7 +85,7 @@ export default function Leaderboards() {
     joinedAt: "2024-01-15T00:00:00Z",
   });
 
-  const generateMockGlobalLeaderboard = async (): Promise<Leaderboard> => {
+  const generateGlobalLeaderboard = async (): Promise<Leaderboard> => {
     const leaderboard = await fetchGlobalLeaderboard();
     console.log(leaderboard);
     return {
@@ -147,7 +147,7 @@ export default function Leaderboards() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const mockUserStats = generateMockStats();
-      const mockGlobalLeaderboard = await generateMockGlobalLeaderboard();
+      const mockGlobalLeaderboard = await generateGlobalLeaderboard();
       const mockRecentGames = generateMockRecentGames();
       // console.log(mockRecentGames);
       setUserStats(mockUserStats);
