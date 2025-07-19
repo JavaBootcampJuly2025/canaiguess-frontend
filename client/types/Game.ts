@@ -42,8 +42,10 @@ export interface GameInstance {
 
 type RecentGame = {
   id: string;
+  score: number
+  ;
+  // unused temporarily
   gameMode: "single" | "pair" | "group";
-  score: number;
   accuracy: number;
   totalImages: number;
   correctGuesses: number;

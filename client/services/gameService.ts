@@ -1,5 +1,31 @@
 import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
-import { GamePageParams, GameConfig, GameResult } from "@/types/Game";
+import { LastGameDTO } from "@/dto/LastGameDTO";
+import { GameResult } from "@/types/Game";
+
+// API call to fetch game data
+export const fetchGameData = async (gameId: string, token: string) => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const response = await fetch(`${API_BASE_URL}/api/game/${gameId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  const text = await response.text();
+  const data = JSON.parse(text);
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  return data;
+};
 
 // API call to fetch images
 export const fetchBatchImagesFromApi = async (gameId: string, token: string) => {
@@ -103,3 +129,26 @@ Promise<GameResult> => {
 
   return data;
 };
+
+// API call to retrieve 10 last games
+export const fetchLastGames = async (token: string):
+  Promise<LastGameDTO[]> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  console.log("Fetching last 10 games for this user");
+
+  const response = await fetch(`${API_BASE_URL}/api/history/last10`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  const text = await response.text();
+  const data = JSON.parse(text);
+  console.log(data);
+
+  return data;
+}

@@ -25,8 +25,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Leaderboard, RecentGame, UserStats } from "@/types/Leaderboards";
-import {generateFakeGames} from "@/services/mockImageData";
-import {fetchGlobalLeaderboard} from "@/services/leaderboardsService";
+import { fetchGlobalLeaderboard } from "@/services/leaderboardsService";
+import { fetchGameData, fetchGameResults, fetchLastGames } from "@/services/gameService";
 
 export default function Leaderboards() {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ export default function Leaderboards() {
     useState<Leaderboard | null>(null);
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
 
-  // Mock data generation
+  // Mock personal stat data generation
   const generateMockStats = (): UserStats => ({
     userId: "current-user",
     username: "Neural Detective",
@@ -75,8 +75,6 @@ export default function Leaderboards() {
       averageScore: 87.8,
       bestScore: 1000,
     },
-    currentStreak: 12,
-    longestStreak: 28,
     gamesThisWeek: 23,
     gamesThisMonth: 67,
     globalRank: 47,
@@ -106,36 +104,46 @@ export default function Leaderboards() {
 
   };
 
-  const generateMockRecentGames = (): RecentGame[] => {
-    const fakeGames = generateFakeGames();
+  const retrieveRecentGames = async (): Promise<RecentGame[]> => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No auth token found");
 
-    return fakeGames.map((fake, index) => {
-      const { config, result, id } = fake;
+    // Fetch last games list
+    const lastGames = await fetchLastGames(token); // returns [{ gameId, pointsEarned }, ...]
 
-      const totalImages = config.batchSize * config.batchCount;
+    // Fetch gameData and gameResult in parallel for each game
+    const enrichedGamesPromises = lastGames.map(async (game) => {
+      const [gameData, gameResult] = await Promise.all([
+        fetchGameData(game.gameId.toString(), token),
+        fetchGameResults(game.gameId.toString(), token),
+      ]);
 
-      let gameMode: "single" | "pair" | "group";
-      if (config.batchSize === 1) {
-        gameMode = "single";
-      } else if (config.batchSize === 2) {
-        gameMode = "pair";
-      } else {
-        gameMode = "group";
-      }
+      let gameMode: "single" | "pair" | "group" = "group";
+      if (gameData.batchSize === 1) gameMode = "single";
+      else if (gameData.batchSize === 2) gameMode = "pair";
 
-      const accuracy = Math.round(result.accuracy * 1000) / 10; // percentage, 1 decimal
-      const score = Math.floor(accuracy * 10); // arbitrary score scaling
+      const totalImages = gameData.batchSize * gameData.batchCount;
 
       return {
-        id: `game-${id}`,
+        id: `game-${game.gameId}`,
+        score: game.pointsEarned,
         gameMode,
-        score,
-        accuracy,
+        accuracy: Math.round(gameResult.accuracy * 1000) / 10,
         totalImages,
-        correctGuesses: result.correct,
-        difficulty: config.difficulty,
+        correctGuesses: gameResult.correct,
+        difficulty: gameData.difficulty,
+        gameId: game.gameId,  // keep numeric ID for sorting
       };
     });
+
+    // Wait for all promises to resolve
+    const enrichedGames = await Promise.all(enrichedGamesPromises);
+
+    // Sort by numeric gameId descending (latest first)
+    enrichedGames.sort((a, b) => b.gameId - a.gameId);
+
+    // Remove the temporary gameId field if you want
+    return enrichedGames.map(({ gameId, ...rest }) => rest);
   };
 
   // Load data on component mount
@@ -147,12 +155,12 @@ export default function Leaderboards() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const mockUserStats = generateMockStats();
-      const mockGlobalLeaderboard = await generateGlobalLeaderboard();
-      const mockRecentGames = generateMockRecentGames();
+      const globalLeaderboard = await generateGlobalLeaderboard();
+      const recentGames = await retrieveRecentGames();
       // console.log(mockRecentGames);
       setUserStats(mockUserStats);
-      setGlobalLeaderboard(mockGlobalLeaderboard);
-      setRecentGames(mockRecentGames);
+      setGlobalLeaderboard(globalLeaderboard);
+      setRecentGames(recentGames);
       setIsLoading(false);
     };
 
@@ -403,7 +411,7 @@ export default function Leaderboards() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-ai-glow">
                           #{userStats.globalRank}
@@ -434,22 +442,6 @@ export default function Leaderboards() {
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Games Played
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-cyber-green">
-                          {userStats.currentStreak}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Current Streak
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-yellow-400">
-                          {userStats.longestStreak}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Best Streak
                         </div>
                       </div>
                     </div>
@@ -541,7 +533,7 @@ export default function Leaderboards() {
                                       "text-xs capitalize",
                                     )}
                                   >
-                                    {game.difficulty * 100 + "%"}
+                                    {game.difficulty + "%"}
                                   </Badge>
                                 </div>
                                 <div className="text-xs text-muted-foreground">

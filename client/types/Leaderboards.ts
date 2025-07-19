@@ -18,8 +18,6 @@ export interface UserStats {
   groupImageStats: GameModeStats;
 
   // Achievements and streaks
-  currentStreak: number;
-  longestStreak: number;
   gamesThisWeek: number;
   gamesThisMonth: number;
 
