@@ -30,6 +30,9 @@ export default function Game() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // used to change the color of the image according to guess result
+  const [guessFeedback, setGuessFeedback] = useState<Record<string, boolean | null>>({});
+
 
   const fetchBatchImages = async () => {
     if (!gameId) {
@@ -136,10 +139,7 @@ export default function Game() {
     setIsSubmitting(true);
 
     const guesses = game.userGuesses;
-    const correctChoices = game.currentImages;
     const token = localStorage.getItem("token");
-    // const gameId; // or gameConfig.gameId;
-
 
     try {
       const result = await submitGuessesRequest(
@@ -148,6 +148,13 @@ export default function Game() {
         token
       );
 
+      // Map server response to { imageId: correct/incorrect }
+      const feedback: Record<string, boolean> = {};
+      guesses.forEach((guess, i) => {
+        feedback[guess.imageId] = result.correct[i];
+      });
+      setGuessFeedback(feedback);
+
       const batchCorrect = result.correct.filter(Boolean).length;
 
       toast({
@@ -155,13 +162,18 @@ export default function Game() {
         description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
       });
 
+      // Wait for some time before moving on depending on batch size
+      await new Promise((resolve) => setTimeout(resolve, (2300 * gameConfig.batchSize*0.4)+600));
+
       if (gameConfig.currentBatch >= gameConfig.batchCount) {
         navigate(`/game/${gameId}/results/`, { state: { result: game.result } });
       } else {
         const nextBatch = gameConfig.currentBatch + 1;
         const nextImages = await fetchBatchImages();
 
-        // Both need to be updated!
+        // Reset feedback for next round
+        setGuessFeedback({});
+
         setGameConfig((prev) => ({
           ...prev,
           currentBatch: nextBatch,
@@ -184,6 +196,7 @@ export default function Game() {
       setIsSubmitting(false);
     }
   };
+
 
   const getImageGuess = (imageId: string): boolean | null => {
     return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
@@ -294,9 +307,14 @@ export default function Game() {
                 {game.currentImages.map((image, index) => (
                   <Card
                     key={image.id}
-                    className="border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300"
+                    className={cn(
+                      "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300",
+                      guessFeedback[image.id] === true && "ring-4 ring-cyber-green",
+                      guessFeedback[image.id] === false && "ring-4 ring-red-500"
+                    )}
                   >
-                    <div className="aspect-[4/3] relative">
+
+                  <div className="aspect-[4/3] relative">
                       <img
                         src={image.url}
                         alt={`Image ${index + 1}`}
