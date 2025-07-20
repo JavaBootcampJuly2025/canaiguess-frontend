@@ -24,8 +24,8 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Leaderboard, RecentGame, UserStats } from "@/types/Leaderboards";
-import { fetchGlobalLeaderboard } from "@/services/leaderboardsService";
+import { AccuracyLeaderboard, Leaderboard, RecentGame, UserStats } from "@/types/Leaderboards";
+import { fetchGlobalLeaderboard, fetchGlobalAccuracyLeaderboard } from "@/services/leaderboardsService";
 import { fetchGameData, fetchGameResults, fetchLastGames } from "@/services/gameService";
 
 export default function Leaderboards() {
@@ -34,6 +34,8 @@ export default function Leaderboards() {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [globalLeaderboard, setGlobalLeaderboard] =
     useState<Leaderboard | null>(null);
+  const [globalAccuracyLeaderboard, setGlobalAccuracyLeaderboard] =
+    useState<AccuracyLeaderboard | null>(null);
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
 
   // Mock personal stat data generation
@@ -101,7 +103,26 @@ export default function Leaderboards() {
       totalPlayers: 15847,
       lastUpdated: new Date().toISOString(),
     };
+  };
 
+  const generateGlobalAccuracyLeaderboard = async (): Promise<AccuracyLeaderboard> => {
+    const leaderboard = await fetchGlobalAccuracyLeaderboard();
+    console.log(leaderboard);
+    return {
+      type: "global",
+      entries: leaderboard.map((player, index) => ({
+        userId:
+          player.username === "Neural Detective"
+            ? "current-user"
+            : `player-${index}`,
+        username: player.username,
+        accuracy: player.accuracy,
+        rank: index + 1,
+        isCurrentUser: player.username === localStorage.getItem("username"),
+      })),
+      totalPlayers: 15847,
+      lastUpdated: new Date().toISOString(),
+    };
   };
 
   const retrieveRecentGames = async (): Promise<RecentGame[]> => {
@@ -156,10 +177,13 @@ export default function Leaderboards() {
 
       const mockUserStats = generateMockStats();
       const globalLeaderboard = await generateGlobalLeaderboard();
+      const globalAccuracyLeaderboard = await generateGlobalAccuracyLeaderboard();
+
       const recentGames = await retrieveRecentGames();
       // console.log(mockRecentGames);
       setUserStats(mockUserStats);
       setGlobalLeaderboard(globalLeaderboard);
+      setGlobalAccuracyLeaderboard(globalAccuracyLeaderboard)
       setRecentGames(recentGames);
       setIsLoading(false);
     };
@@ -286,13 +310,20 @@ export default function Leaderboards() {
 
             {/* Main Tabs */}
             <Tabs defaultValue="global" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
+              <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
                 <TabsTrigger
-                  value="global"
+                  value="score"
                   className="flex items-center space-x-2"
                 >
                   <Globe className="w-4 h-4" />
-                  <span>Global Leaderboard</span>
+                  <span>Score Leaderboard</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="accuracy"
+                  className="flex items-center space-x-2"
+                >
+                  <Globe className="w-4 h-4" />
+                  <span>Accuracy Leaderboard</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="personal"
@@ -304,12 +335,12 @@ export default function Leaderboards() {
               </TabsList>
 
               {/* Global Leaderboard Tab */}
-              <TabsContent value="global" className="space-y-6">
+              <TabsContent value="score" className="space-y-6">
                 <Card className="border-border/50 backdrop-blur-sm bg-card/80">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <Trophy className="w-6 h-6 text-human-glow" />
-                      <span>Top 10 Global Players</span>
+                      <span>Top 10 Global Players by Score</span>
                     </CardTitle>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center space-x-2">
@@ -385,6 +416,100 @@ export default function Leaderboards() {
                           <div className="text-right">
                             <div className="text-2xl font-bold">
                               {entry.score.toLocaleString()}
+                            </div>
+                            {/*<div className="text-sm text-muted-foreground">*/}
+                            {/*  {entry.accuracy.toFixed(1)}% accuracy*/}
+                            {/*</div>*/}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Global Accuracy Leaderboard Tab */}
+              <TabsContent value="accuracy" className="space-y-6">
+                <Card className="border-border/50 backdrop-blur-sm bg-card/80">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Trophy className="w-6 h-6 text-human-glow" />
+                      <span>Top 10 Global Players by Accuracy</span>
+                    </CardTitle>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4" />
+                        <span>
+                          {globalAccuracyLeaderboard.totalPlayers.toLocaleString()}{" "}
+                          total players
+                        </span>
+                      </div>
+                      <span>
+                        Updated{" "}
+                        {new Date(
+                          globalAccuracyLeaderboard.lastUpdated,
+                        ).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {globalAccuracyLeaderboard.entries.map((entry) => (
+                        <div
+                          key={entry.userId}
+                          className={cn(
+                            "flex items-center space-x-4 p-4 rounded-lg transition-all duration-300",
+                            entry.isCurrentUser
+                              ? "bg-ai-glow/10 border border-ai-glow/30 shadow-lg shadow-ai-glow/10"
+                              : "bg-muted/20 hover:bg-muted/40",
+                            entry.rank <= 3 && "ring-1 ring-human-glow/20",
+                          )}
+                        >
+                          <div className="w-12 flex justify-center">
+                            {getRankIcon(entry.rank)}
+                          </div>
+                          <Avatar
+                            className={cn(
+                              "w-12 h-12",
+                              entry.rank <= 3 && "ring-2 ring-human-glow/50",
+                            )}
+                          >
+                            <AvatarImage src={entry.avatar} />
+                            <AvatarFallback>{entry.username[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={cn(
+                                  "font-semibold text-lg",
+                                  entry.rank === 1 && "text-yellow-400",
+                                  entry.rank === 2 && "text-gray-400",
+                                  entry.rank === 3 && "text-amber-600",
+                                )}
+                              >
+                                {entry.username}
+                              </span>
+                              {entry.isCurrentUser && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs border-ai-glow/50 text-ai-glow"
+                                >
+                                  You
+                                </Badge>
+                              )}
+                              {entry.rank <= 3 && (
+                                <Badge className="text-xs bg-human-glow/20 text-human-glow border-human-glow/30">
+                                  Top 3
+                                </Badge>
+                              )}
+                            </div>
+                            {/*<div className="text-sm text-muted-foreground">*/}
+                            {/*  {entry.gamesPlayed} games played*/}
+                            {/*</div>*/}
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold">
+                              {entry.accuracy.toLocaleString()}
                             </div>
                             {/*<div className="text-sm text-muted-foreground">*/}
                             {/*  {entry.accuracy.toFixed(1)}% accuracy*/}

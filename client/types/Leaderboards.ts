@@ -55,6 +55,12 @@ export interface Leaderboard {
   totalPlayers: number;
   lastUpdated: string;
 }
+export interface AccuracyLeaderboard {
+  type: LeaderboardType;
+  entries: LeaderboardEntry[];
+  totalPlayers: number;
+  lastUpdated: string;
+}
 
 export type LeaderboardType =
   | "global"
