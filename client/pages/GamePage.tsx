@@ -336,8 +336,9 @@ export default function Game() {
                     key={image.id}
                     className={cn(
                       "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300",
-                      guessFeedback[image.id] === true && "ring-4 ring-cyber-green",
-                      guessFeedback[image.id] === false && "ring-4 ring-red-500",
+                      guessFeedback[image.id] === true && "ring-4 ring-cyber-green shadow-[0_0_30px_10px] shadow-cyber-green/60",
+                      guessFeedback[image.id] === false && "ring-4 ring-red-500 shadow-[0_0_30px_10px] shadow-red-500/60",
+
                     )}
                   >
 
