@@ -3,21 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, EyeOff, Brain, Zap, Sparkles, Bot, User } from "lucide-react";
+import { Bot, Brain, Eye, EyeOff, Sparkles, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Exception handling
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [businessError, setBusinessError] = useState<string | null>(null);
+  const usernameErrors = businessError && businessError.toLowerCase().includes("username") ? [businessError] : [];
+  const emailErrors = businessError && businessError.toLowerCase().includes("email") ? [businessError] : [];
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const loginErrors = loginError && loginError.toLowerCase().includes("credentials")
+    ? [loginError]
+    : [];
+
+// if later validation contains errors for email too, then they will have to be separated like business errors
+  const passwordErrors = validationErrors.filter(err =>
+    err.toLowerCase().includes("password"),
+  );
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,40 +40,45 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // 👈 allows cookies/session
+        credentials: "include",
         body: JSON.stringify({ username, password }),
       });
-
+      const data = await response.json();
       if (response.ok) {
         // Login success
-        if (response.ok) {
-          const data = await response.json(); 
-          const token = data.token;
+        const token = data.token;
 
-          if (token) {
-            localStorage.setItem("token", token);
-            localStorage.setItem("username", username);
-            navigate("/menu");
-          } else {
-            alert("Login succeeded but no token returned.");
-          }
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("username", username);
+          navigate("/menu");
         } else {
-          // Login failed
-          const message = await response.text();
-          alert("Login failed: " + message);
+          alert("Login succeeded but no token returned.");
         }
+      } else {
+        if (data.validationErrors) {
+          setValidationErrors(data.validationErrors);
+          setBusinessError(null); // clear any previous business error
+
+        } else if (data.businessErrorCode) {
+          setBusinessError(data.businessError || data.error);
+          setValidationErrors([]);
+        } else {
+          console.error("Registration failed:", data);
+          setBusinessError("Registration failed. Please try again.");
+          setValidationErrors([]);
+        }
+        // Login failed
+        setLoginError(data.error || "Login failed.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error:", err.errorCode);
       alert("Something went wrong. See console.");
-    } finally {
+    }
+  finally
+    {
       setIsLoading(false);
     }
-    // Simulate login
-    // setTimeout(() => {
-    //   setIsLoading(false);
-    //   navigate("/menu");
-    // }, 2000);
   };
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +89,7 @@ export default function LoginPage() {
     const email = (document.getElementById("registerEmail") as HTMLInputElement).value;
     const password = (document.getElementById("registerPassword") as HTMLInputElement).value;
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
         method: "POST",
@@ -92,8 +106,22 @@ export default function LoginPage() {
 
       if (response.ok) {
         console.log("Registration successful!");
+        setValidationErrors([]);
+        setBusinessError(null);
       } else {
-        console.error("Registration failed:", await response.text());
+        const data = await response.json();
+        if (data.validationErrors) {
+          setValidationErrors(data.validationErrors);
+          setBusinessError(null); // clear any previous business error
+
+        } else if (data.businessErrorCode) {
+          setBusinessError(data.businessError || data.error);
+          setValidationErrors([]);
+        } else {
+          console.error("Registration failed:", data);
+          setBusinessError("Registration failed. Please try again.");
+          setValidationErrors([]);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -107,8 +135,10 @@ export default function LoginPage() {
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ai-glow/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-neural-purple/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-neural-purple/10 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       {/* Neural network pattern overlay */}
@@ -173,7 +203,8 @@ export default function LoginPage() {
                 <Brain className="w-10 h-10 sm:w-12 sm:h-12 text-ai-glow" />
                 <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+              <div
+                className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
                 CanAIGuess
               </div>
             </div>
@@ -223,6 +254,9 @@ export default function LoginPage() {
                         required
                         className="bg-background/50 h-11 text-base sm:text-sm"
                       />
+                      {loginErrors && (
+                        <div className="text-red-500 mb-2">{loginErrors}</div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password" className="text-sm font-medium">
@@ -249,6 +283,12 @@ export default function LoginPage() {
                             <Eye className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
+                        {/* Password Validation Errors */}
+                        {passwordErrors.length > 0 && (
+                          <div className="text-red-500 mt-2">
+                            <p>Wrong password.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -309,6 +349,13 @@ export default function LoginPage() {
                           required
                           className="bg-background/50 h-11 text-base sm:text-sm"
                         />
+                        {usernameErrors.length > 0 && (
+                          <div className="text-red-500">
+                            {usernameErrors.map((err, i) => (
+                              <div key={i}>{err}</div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -325,6 +372,13 @@ export default function LoginPage() {
                         required
                         className="bg-background/50 h-11 text-base sm:text-sm"
                       />
+                      {emailErrors.length > 0 && (
+                        <div className="text-red-500">
+                          {emailErrors.map((err, i) => (
+                            <div key={i}>{err}</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label
@@ -356,6 +410,15 @@ export default function LoginPage() {
                         </Button>
                       </div>
                     </div>
+                    {/* Password Validation Errors */}
+                    {validationErrors.length > 0 && (
+                      <div className="text-red-500 mt-2">
+                        {validationErrors.map((err, i) => (
+                          <div key={i}>{err}</div>
+                        ))}
+                      </div>
+                    )}
+
                     <Button
                       type="submit"
                       className={cn(
