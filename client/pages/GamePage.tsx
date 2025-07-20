@@ -369,78 +369,103 @@ export default function Game() {
                   "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
                 )}
               >
-                {game.currentImages.map((image, index) => (
-                  <Card
-                    key={image.id}
-                    onClick={() => handleImageClick(image.id)}
-                    className={cn(
-                      "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer",
-                      guessFeedback[image.id] === true && "ring-4 ring-cyber-green shadow-[0_0_30px_10px] shadow-cyber-green/60",
-                      guessFeedback[image.id] === false && "ring-4 ring-red-500 shadow-[0_0_30px_10px] shadow-red-500/60",
-                      // Local guess styling
-                      getImageGuess(image.id) === true && "ring-4 ring-ai-glow"
-                    )}
-                  >
+                {game.currentImages.map((image, index) => {
+                  const userGuess = getImageGuess(image.id);
+                  const feedback = guessFeedback[image.id];
+                  let badgeClass = "backdrop-blur-sm";
+                  let badgeContent = "Image " + Number(index + 1);
 
-                    <div className="aspect-[4/3] relative">
-                      <img
-                        src={image.url}
-                        alt={`Image ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <Badge
-                          variant="secondary"
-                          className="bg-background/80 backdrop-blur-sm"
-                        >
-                          Image {index + 1}
-                        </Badge>
-                      </div>
-                    </div>
-                    {gameConfig.batchSize === 1 ? (
-                      // Keep buttons for single image mode.
-                      <CardContent className="p-4">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant={
-                              getImageGuess(image.id) === true
-                                ? "default"
-                                : "outline"
-                            }
-                            onClick={() => handleImageGuess(image.id, true)}
-                            className={cn(
-                              getImageGuess(image.id) === true &&
-                              "bg-ai-glow hover:bg-ai-glow/90 text-white",
-                            )}
+                  let isAI: boolean | undefined = undefined;
+
+                  if (feedback !== undefined) {
+                    if (userGuess === true) {
+                      // User guessed AI → if guess was correct, it’s AI; if wrong, it’s Human.
+                      isAI = feedback === true;
+                    } else {
+                      // User did NOT guess AI → guessed Human.
+                      // If they were right, it’s Human. If they were wrong, it’s AI.
+                      isAI = feedback === false;
+                    }
+                  }
+                  if (feedback !== undefined) {
+                    badgeContent = isAI ? "AI generated" : "Human made";
+                    badgeContent += feedback ? "" : "!";
+                    badgeClass = feedback
+                      ? "bg-cyber-green/80"
+                      : "bg-red-500/80";
+                  }
+
+                  return (
+                    <Card
+                      key={image.id}
+                      onClick={() => handleImageClick(image.id)}
+                      className={cn(
+                        "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer",
+                        // Feedback styling overrides everything
+                        guessFeedback[image.id] === true &&
+                        "ring-4 ring-cyber-green shadow-[0_0_30px_10px] shadow-cyber-green/60",
+                        guessFeedback[image.id] === false &&
+                        "ring-4 ring-red-500 shadow-[0_0_30px_10px] shadow-red-500/60",
+                        // Only show guess styling if there is NO feedback yet
+                        guessFeedback[image.id] === undefined &&
+                        getImageGuess(image.id) === true &&
+                        "ring-4 ring-ai-glow"
+                      )}
+                    >
+                      <div className="aspect-[4/3] relative">
+                        <img
+                          src={image.url}
+                          alt={`Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute top-3 left-3">
+                          <Badge
+                            variant="secondary"
+                            className={cn(badgeClass, "backdrop-blur-sm")}
                           >
-                            <Bot className="w-4 h-4 mr-2" />
-                            AI Generated
-                          </Button>
-                          <Button
-                            variant={
-                              getImageGuess(image.id) === false
-                                ? "default"
-                                : "outline"
-                            }
-                            onClick={() => handleImageGuess(image.id, false)}
-                            className={cn(
-                              getImageGuess(image.id) === false &&
-                              "bg-human-glow hover:bg-human-glow/90 text-white",
-                            )}
-                          >
-                            <User className="w-4 h-4 mr-2" />
-                            Human Made
-                          </Button>
+                            {badgeContent}
+                          </Badge>
                         </div>
-                      </CardContent>
-                    ) : null}
-                  </Card>
-                ))}
-              </div>
-            )}
+                      </div>
+                      {gameConfig.batchSize === 1 ? (
+                        <CardContent className="p-4">
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              variant={
+                                getImageGuess(image.id) === true ? "default" : "outline"
+                              }
+                              onClick={() => handleImageGuess(image.id, true)}
+                              className={cn(
+                                getImageGuess(image.id) === true &&
+                                "bg-ai-glow hover:bg-ai-glow/90 text-white"
+                              )}
+                            >
+                              <Bot className="w-4 h-4 mr-2" />
+                              AI Generated
+                            </Button>
+                            <Button
+                              variant={
+                                getImageGuess(image.id) === false ? "default" : "outline"
+                              }
+                              onClick={() => handleImageGuess(image.id, false)}
+                              className={cn(
+                                getImageGuess(image.id) === false &&
+                                "bg-human-glow hover:bg-human-glow/90 text-white"
+                              )}
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              Human Made
+                            </Button>
+                          </div>
+                        </CardContent>
+                      ) : null}
+                    </Card>
+                  );
+                })}
+              </div>)}
 
-            {/* Submit Button */}
+                {/* Submit Button */}
             {!isLoading && (
               <div className="flex justify-center">
                 <Button
