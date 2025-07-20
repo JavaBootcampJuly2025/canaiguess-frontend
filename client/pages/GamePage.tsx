@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
 import { fetchBatchImagesFromApi, submitGuessesRequest } from "@/services/gameService";
+import { ImageBatchResponseDTO, ImageDTO } from "@/dto/ImageBatchResponseDTO";
 
 export default function Game() {
   const navigate = useNavigate();
@@ -80,20 +81,26 @@ export default function Game() {
 
   // Load initial batch
   useEffect(() => {
-    if (game.currentImages.length === 0 &&
-      gameConfig.batchSize != 0) {
+    if (
+      game.currentImages.length === 0 &&
+      gameConfig.batchSize !== 0
+    ) {
       console.log("Passing initial batch size: " + gameConfig.batchSize);
-      fetchBatchImages().then((images) => {
+
+      fetchBatchImages().then((images: ImageDTO[]) => {
         setGameInstance((prev) => ({
           ...prev,
           currentImages: images,
           userGuesses: [],
         }));
-      });
+      }).catch((error) => {
+        console.error("Failed to fetch images:", error);
+      }); 
     }
   }, [gameConfig.currentBatch, gameConfig.batchSize]);
 
-  const handleImageGuess = (imageId: string, guess: Guess) => {
+
+  const handleImageGuess = (imageId: number, guess: Guess) => {
     setGameInstance((prev) => {
       const existingGuessIndex = prev.userGuesses.findIndex(
         (g) => g.imageId === imageId,
@@ -119,7 +126,7 @@ export default function Game() {
     });
   };
 
-  const handleImageClick = (imageId: string) => {
+  const handleImageClick = (imageId: number) => {
     if (gameConfig.batchSize === 2) {
       // Pairs: selecting an image marks it as AI, the other is Human
       handleImageGuess(imageId, true);
@@ -261,7 +268,7 @@ export default function Game() {
   };
 
 
-  const getImageGuess = (imageId: string): boolean | null => {
+  const getImageGuess = (imageId: number): boolean | null => {
     return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
   };
 

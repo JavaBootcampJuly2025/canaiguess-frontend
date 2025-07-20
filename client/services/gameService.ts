@@ -1,6 +1,7 @@
 import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
 import { LastGameDTO } from "@/dto/LastGameDTO";
 import { GameResult } from "@/types/Game";
+import { ImageBatchResponseDTO, ImageDTO } from "@/dto/ImageBatchResponseDTO";
 
 // API call to fetch game data
 export const fetchGameData = async (gameId: string, token: string) => {
@@ -28,7 +29,10 @@ export const fetchGameData = async (gameId: string, token: string) => {
 };
 
 // API call to fetch images
-export const fetchBatchImagesFromApi = async (gameId: string, token: string) => {
+export const fetchBatchImagesFromApi = async (
+  gameId: string,
+  token: string
+): Promise<ImageDTO[]> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/batch`, {
@@ -42,17 +46,14 @@ export const fetchBatchImagesFromApi = async (gameId: string, token: string) => 
   if (!response.ok) {
     throw new Error(await response.text());
   }
-  const text = await response.text();
-  const data = JSON.parse(text);
 
+  const data: ImageBatchResponseDTO = await response.json();
+  console.log(data);
   if (!Array.isArray(data.images)) {
     throw new Error("API response does not contain 'images' array.");
   }
 
-  return data.images.map((url) => ({
-    id: url,
-    url,
-  }));
+  return data.images;
 };
 
 export const createNewGame = async (

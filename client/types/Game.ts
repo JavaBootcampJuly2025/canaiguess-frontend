@@ -5,14 +5,14 @@ export type GamePageParams = {
 export type Guess = true | false;
 
 export interface GuessEntry {
-  imageId: string;
+  imageId: number;
   guess: Guess;
 }
 
 export type ImageData = {
-  id: string;
+  id: number;
   url: string;
-  isAI: boolean;
+  isAI?: boolean;
 };
 
 // For now it's partially random, should be fetched from API
