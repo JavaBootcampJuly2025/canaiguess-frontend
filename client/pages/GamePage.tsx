@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
-import { GamePageParams, GameConfig, GameInstance, Guess } from "@/types/Game";
+import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
 import { fetchBatchImagesFromApi, submitGuessesRequest } from "@/services/gameService";
 
 export default function Game() {
@@ -15,7 +15,7 @@ export default function Game() {
   const { gameId } = useParams<GamePageParams>();
   // get the game instance or create default
   const [gameConfig, setGameConfig] = useState<GameConfig>({
-    batchSize: 0, //1 for single batchSize, 2 for pair, 4-6 for group
+    batchSize: 0, //1 for single batchSize, 2 for pair, 4+ for group
     batchCount: 6,
     currentBatch: 0,
     difficulty: 0.5,
@@ -30,6 +30,9 @@ export default function Game() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [totalAttempted, setTotalAttempted] = useState(0);
+
   // used to change the color of the image according to guess result
   const [guessFeedback, setGuessFeedback] = useState<Record<string, boolean | null>>({});
 
@@ -145,7 +148,7 @@ export default function Game() {
       const result = await submitGuessesRequest(
         Number(gameId),
         guesses.map((g) => g.guess),
-        token
+        token,
       );
 
       // Map server response to { imageId: correct/incorrect }
@@ -157,13 +160,37 @@ export default function Game() {
 
       const batchCorrect = result.correct.filter(Boolean).length;
 
+      setTotalCorrect((prev) => prev + batchCorrect);
+      setTotalAttempted((prev) => prev + guesses.length);
+
+      // Track progress
+      const newTotalCorrect = totalCorrect + batchCorrect;
+      const newTotalAttempted = totalAttempted + guesses.length;
+      const accuracy = newTotalCorrect / newTotalAttempted;
+
+      // Show different messages in toast depending on user success rate
+      let feedbackMessage = "";
+      if (accuracy >= 0.8) {
+        feedbackMessage = "Awesome! You're spotting AI like a pro!";
+      } else if (accuracy >= 0.6) {
+        feedbackMessage = "Good job! Keep sharpening your AI detector.";
+      } else {
+        feedbackMessage = "Don't give up! You'll get better each round!";
+      }
+
       toast({
-        title: `Batch ${gameConfig.currentBatch} submitted!`,
-        description: `You got ${batchCorrect} out of ${guesses.length} correct.`,
+        title: `Round ${gameConfig.currentBatch} done!`,
+        description: (
+          <>
+            {feedbackMessage}
+            <br />
+            You have {newTotalCorrect} out of {newTotalAttempted} correct so far.
+          </>
+        ),
       });
 
       // Wait for some time before moving on depending on batch size
-      await new Promise((resolve) => setTimeout(resolve, (2300 * gameConfig.batchSize*0.4)+600));
+      await new Promise((resolve) => setTimeout(resolve, (2300 * gameConfig.batchSize * 0.4) + 600));
 
       if (gameConfig.currentBatch >= gameConfig.batchCount) {
         navigate(`/game/${gameId}/results/`, { state: { result: game.result } });
@@ -310,11 +337,11 @@ export default function Game() {
                     className={cn(
                       "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300",
                       guessFeedback[image.id] === true && "ring-4 ring-cyber-green",
-                      guessFeedback[image.id] === false && "ring-4 ring-red-500"
+                      guessFeedback[image.id] === false && "ring-4 ring-red-500",
                     )}
                   >
 
-                  <div className="aspect-[4/3] relative">
+                    <div className="aspect-[4/3] relative">
                       <img
                         src={image.url}
                         alt={`Image ${index + 1}`}
