@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Brain, RotateCcw, Sparkles, Trophy,  } from "lucide-react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, } from "react";
 import { createNewGame } from "@/services/gameService";
 import { GamePageParams, GameConfig, GameResult } from "@/types/Game";
@@ -12,7 +12,6 @@ import { fetchGameResults } from "@/services/gameService";
 // need to have a way to consistently fetch results
 export default function GameOver({ }) {
   const navigate = useNavigate();
-  const location = useLocation();
   var [result, setResult] = useState<GameResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { gameId } = useParams<GamePageParams>();
