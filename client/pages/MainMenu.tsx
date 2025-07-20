@@ -32,7 +32,7 @@ import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
 
 export default function MainMenu() {
   // Default values for new game
-  var [batchSize, setbatchSize] = useState("1");
+  var [batchSize, setBatchSize] = useState("3");
   var [batchCount, setBatchCount] = useState("10");
   var [difficulty, setDifficulty] = useState("50");
   var [isLoading, setIsLoading] = useState(false);
@@ -40,13 +40,17 @@ export default function MainMenu() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
+  const [gameMode, setGameMode] = useState("1"); // new state
+
   const handleStartGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setIsDialogOpen(false);
 
+    // Use custom batch size if group mode is selected, else fix
+    const finalBatchSize = gameMode === "group" ? batchSize : gameMode;
+
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    console.log("Starting game:", { batchSize, batchCount, difficulty });
     const token = localStorage.getItem("token");
 
     try {
@@ -58,27 +62,24 @@ export default function MainMenu() {
         },
         body: JSON.stringify({
           batchCount,
-          batchSize,
+          batchSize: finalBatchSize,
           difficulty,
         }),
       });
 
       if (response.ok) {
-        console.log("New game created!");
-        // parse the response to get the DTO
         const data: NewGameResponseDTO = await response.json();
-        // Navigate to the new game with id
         navigate("/game/" + data.gameId);
       } else {
         console.error("Game not created:", await response.text());
       }
-
     } catch (error) {
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -241,8 +242,8 @@ export default function MainMenu() {
                             Game Mode
                           </Label>
                           <RadioGroup
-                            value={batchSize}
-                            onValueChange={setbatchSize}
+                            value={gameMode}
+                            onValueChange={setGameMode}
                           >
                             <div
                               className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
@@ -282,7 +283,7 @@ export default function MainMenu() {
                             </div>
                             <div
                               className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
-                              <RadioGroupItem value="4" id="group" />
+                              <RadioGroupItem value="group" id="group" />
                               <div className="flex items-center space-x-2 flex-1">
                                 <Grid3X3 className="w-5 h-5 text-neural-purple" />
                                 <div>
@@ -318,6 +319,52 @@ export default function MainMenu() {
                             className="bg-background/50"
                           />
                         </div>
+                        {gameMode === "group" && (
+                          <div className="space-y-2">
+                            <Label htmlFor="batchSize" className="text-base font-medium">
+                              Images per Round
+                            </Label>
+                            <Input
+                              id="batchSize"
+                              type="number"
+                              min="3"
+                              max="9"
+                              value={batchSize}
+                              onChange={(e) => {
+                                const value = e.target.value;
+
+                                // Allow empty string while typing
+                                if (value === "") {
+                                  setBatchSize("");
+                                  return;
+                                }
+
+                                const num = Number(value);
+
+                                // If not a number, ignore (don’t update state)
+                                if (isNaN(num)) {
+                                  return;
+                                }
+
+                                // Allow values >= 3, clamp max to 9
+                                if (num >= 3 && num <= 9) {
+                                  setBatchSize(num.toString());
+                                }
+                                // If below 3 while typing, ignore to prevent showing it
+                              }}
+                              onBlur={() => {
+                                // On blur, if empty or less than 3, reset to "3"
+                                const num = Number(batchSize);
+                                if (batchSize === "" || isNaN(num) || num < 3) {
+                                  setBatchSize("3");
+                                }
+                              }}
+                              className="bg-background/50"
+                            />
+
+
+                          </div>
+                        )}
                         <div className="space-y-2">
                           <Label htmlFor="difficulty" className="text-base font-medium">
                             Difficulty (%)
