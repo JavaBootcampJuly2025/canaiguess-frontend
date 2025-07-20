@@ -119,35 +119,73 @@ export default function Game() {
     });
   };
 
-  const canSubmit = useMemo(() => {
-    const requiredGuesses = game.currentImages.length;
-    const madeGuesses = game.userGuesses.filter(
-      (g) => g.guess !== null && g.guess !== undefined,
-    ).length;
-
+  const handleImageClick = (imageId: string) => {
     if (gameConfig.batchSize === 2) {
-      // For pairs, exactly one should be marked as AI
-      const aiGuesses = game.userGuesses.filter(
-        (g) => g.guess === true,
-      ).length;
-      return aiGuesses === 1 && madeGuesses === 2;
+      // Pairs: selecting an image marks it as AI, the other is Human
+      handleImageGuess(imageId, true);
+    } else {
+      // Group: toggle this image's guess between AI (true) and Human (false)
+      setGameInstance((prev) => {
+        const existingGuess = prev.userGuesses.find((g) => g.imageId === imageId);
+        let newGuesses = [...prev.userGuesses];
+
+        if (existingGuess) {
+          // toggle
+          const newGuess = !existingGuess.guess;
+          const idx = newGuesses.findIndex((g) => g.imageId === imageId);
+          newGuesses[idx] = { imageId, guess: newGuess };
+        } else {
+          newGuesses.push({ imageId, guess: true });
+        }
+
+        return { ...prev, userGuesses: newGuesses };
+      });
+    }
+  };
+
+  const canSubmit = useMemo(() => {
+    if (gameConfig.batchSize === 2) {
+      const aiGuesses = game.userGuesses.filter((g) => g.guess === true).length;
+      return aiGuesses === 1;
     }
 
-    return madeGuesses === requiredGuesses;
+    if (gameConfig.batchSize >= 4) {
+      // Always allow submit: you’ll normalize empty guesses on submit
+      return game.currentImages.length > 0;
+    }
+
+    // Single image: must guess true or false
+    if (gameConfig.batchSize === 1) {
+      return game.userGuesses.length === 1;
+    }
+    return false;
   }, [game]);
 
   const submitGuesses = async () => {
     if (!canSubmit) return;
 
-    setIsSubmitting(true);
-
-    const guesses = game.userGuesses;
     const token = localStorage.getItem("token");
 
+    const guesses = game.userGuesses;
+    setIsSubmitting(true);
+
     try {
+      let guesses = game.userGuesses;
+      if (gameConfig.batchSize >= 4) {
+        // Fill in guesses for unselected images as `false`
+        const allGuesses = game.currentImages.map(image => {
+          const userGuess = guesses.find(g => g.imageId === image.id);
+          return {
+            imageId: image.id,
+            guess: userGuess ? userGuess.guess : false,
+          };
+        });
+
+        guesses = allGuesses;
+      }
       const result = await submitGuessesRequest(
         Number(gameId),
-        guesses.map((g) => g.guess),
+        guesses.map(g => g.guess),
         token,
       );
 
@@ -334,11 +372,13 @@ export default function Game() {
                 {game.currentImages.map((image, index) => (
                   <Card
                     key={image.id}
+                    onClick={() => handleImageClick(image.id)}
                     className={cn(
-                      "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300",
+                      "border-border/50 backdrop-blur-sm bg-card/80 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer",
                       guessFeedback[image.id] === true && "ring-4 ring-cyber-green shadow-[0_0_30px_10px] shadow-cyber-green/60",
                       guessFeedback[image.id] === false && "ring-4 ring-red-500 shadow-[0_0_30px_10px] shadow-red-500/60",
-
+                      // Local guess styling
+                      getImageGuess(image.id) === true && "ring-4 ring-ai-glow"
                     )}
                   >
 
@@ -358,40 +398,43 @@ export default function Game() {
                         </Badge>
                       </div>
                     </div>
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          variant={
-                            getImageGuess(image.id) === true
-                              ? "default"
-                              : "outline"
-                          }
-                          onClick={() => handleImageGuess(image.id, true)}
-                          className={cn(
-                            getImageGuess(image.id) === true &&
-                            "bg-ai-glow hover:bg-ai-glow/90 text-white",
-                          )}
-                        >
-                          <Bot className="w-4 h-4 mr-2" />
-                          AI Generated
-                        </Button>
-                        <Button
-                          variant={
-                            getImageGuess(image.id) === false
-                              ? "default"
-                              : "outline"
-                          }
-                          onClick={() => handleImageGuess(image.id, false)}
-                          className={cn(
-                            getImageGuess(image.id) === false &&
-                            "bg-human-glow hover:bg-human-glow/90 text-white",
-                          )}
-                        >
-                          <User className="w-4 h-4 mr-2" />
-                          Human Made
-                        </Button>
-                      </div>
-                    </CardContent>
+                    {gameConfig.batchSize === 1 ? (
+                      // Keep buttons for single image mode.
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant={
+                              getImageGuess(image.id) === true
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() => handleImageGuess(image.id, true)}
+                            className={cn(
+                              getImageGuess(image.id) === true &&
+                              "bg-ai-glow hover:bg-ai-glow/90 text-white",
+                            )}
+                          >
+                            <Bot className="w-4 h-4 mr-2" />
+                            AI Generated
+                          </Button>
+                          <Button
+                            variant={
+                              getImageGuess(image.id) === false
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() => handleImageGuess(image.id, false)}
+                            className={cn(
+                              getImageGuess(image.id) === false &&
+                              "bg-human-glow hover:bg-human-glow/90 text-white",
+                            )}
+                          >
+                            <User className="w-4 h-4 mr-2" />
+                            Human Made
+                          </Button>
+                        </div>
+                      </CardContent>
+                    ) : null}
                   </Card>
                 ))}
               </div>
