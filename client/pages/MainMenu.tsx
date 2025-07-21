@@ -192,6 +192,15 @@ export default function MainMenu() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => navigate("/profile")}
+              className="border-border/50"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Profile
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleLogout}
               className="border-border/50 hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
             >

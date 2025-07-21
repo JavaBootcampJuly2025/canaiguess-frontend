@@ -556,7 +556,8 @@ export default function Game() {
                               <Button
                                 size="sm"
                                 variant={hasUsedHint(image.id) ? "default" : "secondary"}
-                                onClick={() => {
+                                onClick={(event) => {
+                                  event.stopPropagation();
                                   const existingHint = getHintForImage(image.id);
                                   if (existingHint) {
                                     setSelectedHint(existingHint);
