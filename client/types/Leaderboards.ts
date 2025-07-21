@@ -45,6 +45,7 @@ export interface LeaderboardEntry {
   username: string;
   avatar?: string;
   score: number;
+  accuracy?: number;
   rank: number;
   isCurrentUser?: boolean;
 }
