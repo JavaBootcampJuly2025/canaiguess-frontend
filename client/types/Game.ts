@@ -1,3 +1,5 @@
+import { HintResponseDTO } from "@/dto/HintResponseDTO";
+
 export type GamePageParams = {
   gameId: string;
 };
@@ -5,12 +7,12 @@ export type GamePageParams = {
 export type Guess = true | false;
 
 export interface GuessEntry {
-  imageId: number;
+  imageId: string;
   guess: Guess;
 }
 
 export type ImageData = {
-  id: number;
+  id: string;
   url: string;
   isAI?: boolean;
 };
@@ -38,6 +40,7 @@ export interface GameInstance {
   userGuesses: GuessEntry[];
   result: GameResult | null;
   currentBatch?: number;
+  hintsUsed: HintResponseDTO[];
 }
 
 type RecentGame = {

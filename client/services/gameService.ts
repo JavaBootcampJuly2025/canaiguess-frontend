@@ -1,5 +1,6 @@
 import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
 import { LastGameDTO } from "@/dto/LastGameDTO";
+import { HintResponseDTO } from "@/dto/HintResponseDTO";
 import { GameResult } from "@/types/Game";
 import { ImageBatchResponseDTO, ImageDTO } from "@/dto/ImageBatchResponseDTO";
 
@@ -85,7 +86,7 @@ export const createNewGame = async (
 };
 
 export const submitGuessesRequest = async (
-  gameId: number,
+  gameId: string,
   guesses: boolean[],
   token: string | null
 ): Promise<{ correct: boolean[] }> => {
@@ -149,7 +150,30 @@ export const fetchLastGames = async (token: string):
   }
   const text = await response.text();
   const data = JSON.parse(text);
-  console.log(data);
+  // console.log(data);
+
+  return data;
+}
+
+// API call to retrieve 10 last games
+export const fetchImageHint = async (token: string, imageId: string):
+  Promise<HintResponseDTO> => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  console.log("Analyzing...");
+
+  const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/hint`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  const text = await response.text();
+  const data = JSON.parse(text);
+  // console.log(data);
 
   return data;
 }

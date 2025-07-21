@@ -4,12 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap, Search } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap, Search, Lightbulb,
+  Eye, AlertTriangle, CheckCircle, X, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
-import { fetchBatchImagesFromApi, submitGuessesRequest } from "@/services/gameService";
+import { fetchBatchImagesFromApi, submitGuessesRequest, fetchImageHint } from "@/services/gameService";
 import { ImageDTO } from "@/dto/ImageBatchResponseDTO";
+import { HintResponseDTO } from "@/dto/HintResponseDTO";
 
 export default function Game() {
   const navigate = useNavigate();
@@ -27,13 +37,17 @@ export default function Game() {
     userGuesses: [],
     result: null,
     currentBatch: gameConfig.currentBatch,
+    hintsUsed: [],
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequestingHint, setIsRequestingHint] = useState<string | null>(null);
+
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [totalAttempted, setTotalAttempted] = useState(0);
+  const [selectedHint, setSelectedHint] = useState<HintResponseDTO | null>(null);
 
   // used to change the color of the image according to guess result
   const [guessFeedback, setGuessFeedback] = useState<Record<string, boolean | null>>({});
@@ -102,7 +116,7 @@ export default function Game() {
   }, [gameConfig.currentBatch, gameConfig.batchSize]);
 
 
-  const handleImageGuess = (imageId: number, guess: Guess) => {
+  const handleImageGuess = (imageId: string, guess: Guess) => {
     setGameInstance((prev) => {
       const existingGuessIndex = prev.userGuesses.findIndex(
         (g) => g.imageId === imageId,
@@ -128,7 +142,7 @@ export default function Game() {
     });
   };
 
-  const handleImageClick = (imageId: number) => {
+  const handleImageClick = (imageId: string) => {
     if(isSubmitted) {
       console.log("You had your chance, don't click it now :D");
       return;
@@ -195,7 +209,7 @@ export default function Game() {
         guesses = allGuesses;
       }
       const result = await submitGuessesRequest(
-        Number(gameId),
+        gameId,
         guesses.map(g => g.guess),
         token,
       );
@@ -274,8 +288,32 @@ export default function Game() {
     }
   };
 
+  const requestHint = async (imageId: string) => {
+    setIsRequestingHint(imageId);
+    const token = localStorage.getItem("token");
 
-  const getImageGuess = (imageId: number): boolean | null => {
+    console.log("calling for help from the almighty...")
+
+    const realHint = await fetchImageHint(token, imageId);
+    console.log(realHint);
+    // Simulate API call for hint
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Mock AI hint response
+    const mockHint: HintResponseDTO = {
+      imageId,
+      fake: realHint.fake,
+      signs: realHint.signs, // 2-4 signs
+      // confidence: Math.floor(Math.random() * 30) + 70, // 70-99% confidence
+      // requestedAt: new Date().toISOString(),
+    };
+
+    setSelectedHint(mockHint);
+    setIsRequestingHint(null);
+  };
+
+
+  const getImageGuess = (imageId: string): boolean | null => {
     return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
   };
 
@@ -285,6 +323,14 @@ export default function Game() {
 
   const handleCloseMagnify = () => {
     setFocusedImage(null);
+  };
+
+  const getHintForImage = (imageId: string): HintResponseDTO | null => {
+    return game.hintsUsed.find((hint) => hint.imageId === imageId) || null;
+  };
+
+  const hasUsedHint = (imageId: string): boolean => {
+    return game.hintsUsed.some((hint) => hint.imageId === imageId);
   };
 
   const progress = ((gameConfig.currentBatch - 1) / gameConfig.batchCount) * 100;
@@ -458,6 +504,115 @@ export default function Game() {
                         >
                           <Search className="w-5 h-5 text-foreground" />
                         </button>
+                        <div className="absolute top-3 right-3">
+                          <Dialog
+                            open={selectedHint?.imageId === image.id}
+                            onOpenChange={(open) => {
+                              if (!open) setSelectedHint(null);
+                            }}
+                          >
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant={hasUsedHint(image.id) ? "default" : "secondary"}
+                                onClick={() => {
+                                  const existingHint = getHintForImage(image.id);
+                                  if (existingHint) {
+                                    setSelectedHint(existingHint);
+                                  } else {
+                                    requestHint(image.id);
+                                  }
+                                }}
+                                disabled={isRequestingHint === image.id}
+                                className={cn(
+                                  "bg-background/80 backdrop-blur-sm hover:bg-background/90",
+                                  hasUsedHint(image.id) &&
+                                  "bg-ai-glow/20 text-ai-glow border-ai-glow/30 hover:bg-ai-glow/30",
+                                )}
+                              >
+                                {isRequestingHint === image.id ? (
+                                  <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                ) : (
+                                  <Lightbulb className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </DialogTrigger>
+                            {selectedHint && selectedHint.imageId === image.id && (
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center space-x-2">
+                                    <Brain className="w-5 h-5 text-ai-glow" />
+                                    <span>AI Analysis</span>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        95% confident
+                                      </Badge>
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    Our AI has analyzed this image for authenticity
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  {/* AI's verdict */}
+                                  <div
+                                    className={cn(
+                                      "p-4 rounded-lg border flex items-center space-x-3",
+                                      selectedHint.fake
+                                        ? "bg-destructive/10 border-destructive/20"
+                                        : "bg-human-glow/10 border-human-glow/20",
+                                    )}
+                                  >
+                                    {selectedHint.fake ? (
+                                      <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                                    ) : (
+                                      <CheckCircle className="w-5 h-5 text-human-glow flex-shrink-0" />
+                                    )}
+                                    <div>
+                                      <div className="font-semibold">
+                                        {selectedHint.fake
+                                          ? "Likely AI Generated"
+                                          : "Likely Human Created"}
+                                      </div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {selectedHint.fake
+                                          ? "This image shows signs of artificial generation"
+                                          : "This image appears to be authentic"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Analysis points */}
+                                  <div className="space-y-3">
+                                    <h4 className="font-semibold flex items-center space-x-2">
+                                      <Eye className="w-4 h-4" />
+                                      <span>Key Indicators:</span>
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {selectedHint.signs.map((sign, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="flex items-start space-x-2 text-sm"
+                                        >
+                                          <div className="w-1.5 h-1.5 rounded-full bg-ai-glow mt-2 flex-shrink-0" />
+                                          <span>{sign}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Disclaimer */}
+                                  <div className="text-xs text-muted-foreground p-3 bg-muted/50 rounded border">
+                                    <strong>Note:</strong> This is AI analysis and may not be
+                                    100% accurate. Use this as guidance to help train your own
+                                    detection skills.
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            )}
+                          </Dialog>
+                        </div>
                       </div>
                       {gameConfig.batchSize === 1 ? (
                         <CardContent className="p-4">
