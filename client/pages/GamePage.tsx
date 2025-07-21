@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap } from "lucide-react";
+import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
@@ -38,6 +38,7 @@ export default function Game() {
   // used to change the color of the image according to guess result
   const [guessFeedback, setGuessFeedback] = useState<Record<string, boolean | null>>({});
 
+  const [focusedImage, setFocusedImage] = useState<ImageDTO | null>(null);
 
   const fetchBatchImages = async () => {
     if (!gameId) {
@@ -278,6 +279,14 @@ export default function Game() {
     return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
   };
 
+  const handleMagnifyImage = (image: ImageDTO) => {
+    setFocusedImage(image);
+  };
+
+  const handleCloseMagnify = () => {
+    setFocusedImage(null);
+  };
+
   const progress = ((gameConfig.currentBatch - 1) / gameConfig.batchCount) * 100;
 
   return (
@@ -440,6 +449,15 @@ export default function Game() {
                             {badgeContent}
                           </Badge>
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMagnifyImage(image);
+                          }}
+                          className="absolute bottom-3 right-3 bg-background/70 p-2 rounded-full hover:bg-background/90"
+                        >
+                          <Search className="w-5 h-5 text-foreground" />
+                        </button>
                       </div>
                       {gameConfig.batchSize === 1 ? (
                         <CardContent className="p-4">
@@ -512,6 +530,18 @@ export default function Game() {
           </div>
         </div>
       </div>
+      {focusedImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={handleCloseMagnify}
+        >
+          <img
+            src={focusedImage.url}
+            alt="Focused"
+            className="max-w-full max-h-full rounded shadow-lg"
+          />
+        </div>
+      )}
     </div>
   );
 }
