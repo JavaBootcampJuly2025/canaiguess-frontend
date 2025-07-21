@@ -30,6 +30,7 @@ export default function Game() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [totalAttempted, setTotalAttempted] = useState(0);
@@ -127,6 +128,10 @@ export default function Game() {
   };
 
   const handleImageClick = (imageId: number) => {
+    if(isSubmitted) {
+      console.log("You had your chance, don't click it now :D");
+      return;
+    }
     if (gameConfig.batchSize === 2) {
       // Pairs: selecting an image marks it as AI, the other is Human
       handleImageGuess(imageId, true);
@@ -231,7 +236,7 @@ export default function Game() {
           </>
         ),
       });
-
+      setIsSubmitted(true);
       // Wait for some time before moving on depending on batch size
       await new Promise((resolve) => setTimeout(resolve, (2000 * gameConfig.batchSize * 0.3) + 800));
 
