@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
 import { fetchBatchImagesFromApi, submitGuessesRequest } from "@/services/gameService";
-import { ImageBatchResponseDTO, ImageDTO } from "@/dto/ImageBatchResponseDTO";
+import { ImageDTO } from "@/dto/ImageBatchResponseDTO";
 
 export default function Game() {
   const navigate = useNavigate();
@@ -449,7 +449,7 @@ export default function Game() {
                             {badgeContent}
                           </Badge>
                         </div>
-                        <button
+                        <button title="View full-sized image"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleMagnifyImage(image);

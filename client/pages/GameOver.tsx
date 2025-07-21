@@ -7,9 +7,6 @@ import { createNewGame } from "@/services/gameService";
 import { GamePageParams, GameConfig, GameResult } from "@/types/Game";
 import { fetchGameResults } from "@/services/gameService";
 
-// right now this load right after game end and receives gameId and result on load
-// on refresh the results are gone
-// need to have a way to consistently fetch results
 export default function GameOver({ }) {
   const navigate = useNavigate();
   var [result, setResult] = useState<GameResult | null>(null);

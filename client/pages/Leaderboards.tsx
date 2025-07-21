@@ -12,7 +12,6 @@ import {
   Brain,
   Clock,
   Crown,
-  Globe,
   Grid3X3,
   Image,
   Images,
@@ -30,8 +29,6 @@ import { fetchGameData, fetchGameResults, fetchLastGames } from "@/services/game
 
 export default function Leaderboards() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [globalLeaderboard, setGlobalLeaderboard] =
     useState<Leaderboard | null>(null);
   const [globalAccuracyLeaderboard, setGlobalAccuracyLeaderboard] =
@@ -277,18 +274,15 @@ export default function Leaderboards() {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "beginner":
-        return "text-green-400 bg-green-400/10";
-      case "intermediate":
-        return "text-blue-400 bg-blue-400/10";
-      case "advanced":
-        return "text-purple-400 bg-purple-400/10";
-      case "expert":
-        return "text-red-400 bg-red-400/10";
-      default:
-        return "text-muted-foreground bg-muted/10";
+  const getDifficultyColor = (difficulty: number) => {
+    if (difficulty < 30) {
+      return "text-green-400 bg-green-400/10";
+    } else if (difficulty < 60) {
+      return "text-blue-400 bg-blue-400/10";
+    } else if (difficulty < 80) {
+      return "text-purple-400 bg-purple-400/10";
+    } else {
+      return "text-red-400 bg-red-400/10";
     }
   };
 
@@ -664,7 +658,7 @@ export default function Leaderboards() {
                                   <span className="font-medium capitalize">
                                     {game.gameMode}
                                   </span>
-                                      <Badge className={cn("text-xs capitalize",)}>
+                                      <Badge className={cn("text-xs capitalize", getDifficultyColor(game.difficulty))}>
                                         {game.difficulty + "%"}
                                       </Badge>
                                     </div>
