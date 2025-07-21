@@ -269,6 +269,7 @@ export default function Game() {
       });
     } finally {
       setIsSubmitting(false);
+      setIsSubmitted(false);
     }
   };
 
