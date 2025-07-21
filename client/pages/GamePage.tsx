@@ -12,12 +12,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Bot, Brain, Sparkles, Target, User, Zap, Search, Lightbulb,
-  Eye, AlertTriangle, CheckCircle, X, } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Bot,
+  Brain,
+  CheckCircle,
+  Eye,
+  Lightbulb,
+  Search,
+  Sparkles,
+  Target,
+  User,
+  Zap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
-import { fetchBatchImagesFromApi, submitGuessesRequest, fetchImageHint } from "@/services/gameService";
+import { fetchBatchImagesFromApi, fetchImageHint, submitGuessesRequest } from "@/services/gameService";
 import { ImageDTO } from "@/dto/ImageBatchResponseDTO";
 import { HintResponseDTO } from "@/dto/HintResponseDTO";
 
@@ -111,7 +123,7 @@ export default function Game() {
         }));
       }).catch((error) => {
         console.error("Failed to fetch images:", error);
-      }); 
+      });
     }
   }, [gameConfig.currentBatch, gameConfig.batchSize]);
 
@@ -143,7 +155,7 @@ export default function Game() {
   };
 
   const handleImageClick = (imageId: string) => {
-    if(isSubmitted) {
+    if (isSubmitted) {
       console.log("You had your chance, don't click it now :D");
       return;
     }
@@ -289,27 +301,56 @@ export default function Game() {
   };
 
   const requestHint = async (imageId: string) => {
+    if (isRequestingHint) return;
     setIsRequestingHint(imageId);
+    const existingHint = getHintForImage(imageId);
+    if (existingHint) {
+      console.log("hint exists already!");
+      setSelectedHint(existingHint);
+      return;
+    }
     const token = localStorage.getItem("token");
 
-    console.log("calling for help from the almighty...")
+    try {
+      console.log("calling for help from the almighty...");
 
-    const realHint = await fetchImageHint(token, imageId);
-    console.log(realHint);
-    // Simulate API call for hint
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+      const realHint = await fetchImageHint(token, imageId);
+      console.log(realHint);
 
-    // Mock AI hint response
-    const mockHint: HintResponseDTO = {
-      imageId,
-      fake: realHint.fake,
-      signs: realHint.signs, // 2-4 signs
-      // confidence: Math.floor(Math.random() * 30) + 70, // 70-99% confidence
-      // requestedAt: new Date().toISOString(),
-    };
+      // Mock AI hint response
+      const newHint: HintResponseDTO = {
+        imageId,
+        fake: realHint.fake,
+        signs: realHint.signs, // 2-4 signs
+        // confidence: Math.floor(Math.random() * 30) + 70, // 70-99% confidence
+        // requestedAt: new Date().toISOString(),
+      };
+      setGameInstance((prev) => ({
+        ...prev,
+        hintsUsed: [...prev.hintsUsed, newHint],
+      }));
 
-    setSelectedHint(mockHint);
-    setIsRequestingHint(null);
+      setSelectedHint(newHint);
+    } catch (error) {
+      console.error("Failed to fetch hint:", error);
+
+      let message = "Failed to fetch hint. Please try again.";
+      if (error instanceof Error) {
+        const parsed = JSON.parse(error.message);
+        if (parsed?.error) {
+          message = parsed.error;
+        } else if (parsed?.businessErrorDescription) {
+          message = parsed.businessErrorDescription;
+        }
+      }
+
+      toast({
+        title: "Unable to get a hint",
+        description: message,
+      });
+    } finally {
+      setIsRequestingHint(null);
+    }
   };
 
 
@@ -477,7 +518,7 @@ export default function Game() {
                         // Only show guess styling if there is NO feedback yet
                         guessFeedback[image.id] === undefined &&
                         getImageGuess(image.id) === true &&
-                        "ring-4 ring-ai-glow"
+                        "ring-4 ring-ai-glow",
                       )}
                     >
                       <div className="aspect-[4/3] relative">
@@ -496,11 +537,11 @@ export default function Game() {
                           </Badge>
                         </div>
                         <button title="View full-sized image"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMagnifyImage(image);
-                          }}
-                          className="absolute bottom-3 right-3 bg-background/70 p-2 rounded-full hover:bg-background/90"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMagnifyImage(image);
+                                }}
+                                className="absolute bottom-3 right-3 bg-background/70 p-2 rounded-full hover:bg-background/90"
                         >
                           <Search className="w-5 h-5 text-foreground" />
                         </button>
@@ -531,7 +572,8 @@ export default function Game() {
                                 )}
                               >
                                 {isRequestingHint === image.id ? (
-                                  <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                  <div
+                                    className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                                 ) : (
                                   <Lightbulb className="w-4 h-4" />
                                 )}
@@ -543,12 +585,12 @@ export default function Game() {
                                   <DialogTitle className="flex items-center space-x-2">
                                     <Brain className="w-5 h-5 text-ai-glow" />
                                     <span>AI Analysis</span>
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        95% confident
-                                      </Badge>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      95% confident
+                                    </Badge>
                                   </DialogTitle>
                                   <DialogDescription>
                                     Our AI has analyzed this image for authenticity
@@ -624,7 +666,7 @@ export default function Game() {
                               onClick={() => handleImageGuess(image.id, true)}
                               className={cn(
                                 getImageGuess(image.id) === true &&
-                                "bg-ai-glow hover:bg-ai-glow/90 text-white"
+                                "bg-ai-glow hover:bg-ai-glow/90 text-white",
                               )}
                             >
                               <Bot className="w-4 h-4 mr-2" />
@@ -637,7 +679,7 @@ export default function Game() {
                               onClick={() => handleImageGuess(image.id, false)}
                               className={cn(
                                 getImageGuess(image.id) === false &&
-                                "bg-human-glow hover:bg-human-glow/90 text-white"
+                                "bg-human-glow hover:bg-human-glow/90 text-white",
                               )}
                             >
                               <User className="w-4 h-4 mr-2" />
@@ -651,7 +693,7 @@ export default function Game() {
                 })}
               </div>)}
 
-                {/* Submit Button */}
+            {/* Submit Button */}
             {!isLoading && (
               <div className="flex justify-center">
                 <Button
