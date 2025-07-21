@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,8 +46,47 @@ export default function Leaderboards() {
   const [accuracyLoaded, setAccuracyLoaded] = useState(false);
   const [personalLoaded, setPersonalLoaded] = useState(false);
 
+  const scorePromise = useRef<Promise<void> | null>(null);
+  const accuracyPromise = useRef<Promise<void> | null>(null);
+  const personalPromise = useRef<Promise<void> | null>(null);
+
   const [currentTab, setCurrentTab] = useState("score");
 
+  const loadScore = () => {
+    if (!scorePromise.current) {
+      scorePromise.current = generateGlobalLeaderboard().then((data) => {
+        setGlobalLeaderboard(data);
+        setIsScoreLoading(false);
+        setScoreLoaded(true);
+      });
+    }
+    return scorePromise.current;
+  };
+
+  const loadAccuracy = () => {
+    if (!accuracyPromise.current) {
+      accuracyPromise.current = generateGlobalAccuracyLeaderboard().then((data) => {
+        setGlobalAccuracyLeaderboard(data);
+        setIsAccuracyLoading(false);
+        setAccuracyLoaded(true);
+      });
+    }
+    return accuracyPromise.current;
+  };
+
+  const loadPersonal = () => {
+    if (!personalPromise.current) {
+      personalPromise.current = Promise.all([
+        generateMockStats(),
+        retrieveRecentGames(),
+      ]).then(([stats, games]) => {
+        setRecentGames(games);
+        setIsPersonalLoading(false);
+        setPersonalLoaded(true);
+      });
+    }
+    return personalPromise.current;
+  };
 
   // Mock personal stat data generation
   const generateMockStats = (): UserStats => ({
@@ -179,55 +218,39 @@ export default function Leaderboards() {
     return enrichedGames.map(({ gameId, ...rest }) => rest);
   };
 
+  useEffect(() => {
+    // Always start background loads right away:
+    loadScore();
+    loadAccuracy();
+    loadPersonal();
+  }, []);
+
   // Load data on component mount
   useEffect(() => {
-    // Load score leaderboard at first
-    const loadScore = async () => {
-      setIsScoreLoading(true);
-      const data = await generateGlobalLeaderboard();
-      setGlobalLeaderboard(data);
-      setIsScoreLoading(false);
-      setScoreLoaded(true);
-    };
-
-    loadScore();
-
-    // Start preloading the other tabs in background:
-    generateGlobalAccuracyLeaderboard().then((data) => {
-      setGlobalAccuracyLeaderboard(data);
-      setIsAccuracyLoading(false);
-      setAccuracyLoaded(true);
-    });
-
-    retrieveRecentGames().then((data) => {
-      setRecentGames(data);
-      setIsPersonalLoading(false);
-      setPersonalLoaded(true);
-    });
-
-    const mockStats = generateMockStats();
-    setUserStats(mockStats);
-  }, []);
+    // Actively await only the current tab’s promise:
+    if (currentTab === "score") {
+      loadScore();
+      console.log("Awaiting score");
+    } else if (currentTab === "accuracy") {
+      loadAccuracy();
+      console.log("Awaiting accuracy");
+    } else if (currentTab === "personal") {
+      console.log("Awaiting personal");
+      loadPersonal();
+    }
+  }, [currentTab]);
 
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab);
 
     if (tab === "accuracy" && !accuracyLoaded) {
       setIsAccuracyLoading(true);
-      generateGlobalAccuracyLeaderboard().then((data) => {
-        setGlobalAccuracyLeaderboard(data);
-        setIsAccuracyLoading(false);
-        setAccuracyLoaded(true);
-      });
+      loadAccuracy(); // uses the single ref + sets flags
     }
 
     if (tab === "personal" && !personalLoaded) {
       setIsPersonalLoading(true);
-      retrieveRecentGames().then((data) => {
-        setRecentGames(data);
-        setIsPersonalLoading(false);
-        setPersonalLoaded(true);
-      });
+      loadPersonal(); // uses the single ref + sets flags
     }
   };
 
@@ -268,14 +291,6 @@ export default function Leaderboards() {
         return "text-muted-foreground bg-muted/10";
     }
   };
-
-  // const formatDuration = (seconds: number) => {
-  //   const minutes = Math.floor(seconds / 60);
-  //   const remainingSeconds = seconds % 60;
-  //   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  // };
-
-
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -582,18 +597,14 @@ export default function Leaderboards() {
                     <Card className="border-border/50 backdrop-blur-sm bg-card/80">
                       <CardHeader>
                         <CardTitle className="flex items-center space-x-2">
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={userStats.avatar} />
-                            <AvatarFallback>ND</AvatarFallback>
-                          </Avatar>
-                          <span>{userStats.username}</span>
+                          <span>Username</span>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                           <div className="text-center">
                             <div className="text-2xl font-bold text-ai-glow">
-                              #{userStats.globalRank}
+                              28
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Global Rank
@@ -601,7 +612,7 @@ export default function Leaderboards() {
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-human-glow">
-                              {userStats.totalScore.toLocaleString()}
+                              22222
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Total Score
@@ -609,7 +620,7 @@ export default function Leaderboards() {
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-neural-purple">
-                              {userStats.overallAccuracy.toFixed(1)}%
+                              120%
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Accuracy
@@ -617,7 +628,7 @@ export default function Leaderboards() {
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-electric-blue">
-                              {userStats.totalGamesPlayed}
+                              A lot
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Games Played
@@ -629,60 +640,6 @@ export default function Leaderboards() {
 
                     {/* Mode Performance and Recent Games */}
                     <div className="grid lg:grid-cols-2 gap-6">
-                      {/*/!* Game Mode Performance *!/*/}
-                      {/*<Card className="border-border/50 backdrop-blur-sm bg-card/80">*/}
-                      {/*  <CardHeader>*/}
-                      {/*    <CardTitle className="flex items-center space-x-2">*/}
-                      {/*      <Target className="w-5 h-5 text-ai-glow" />*/}
-                      {/*      <span>Mode Performance</span>*/}
-                      {/*    </CardTitle>*/}
-                      {/*  </CardHeader>*/}
-                      {/*  <CardContent className="space-y-4">*/}
-                      {/*    <div className="flex items-center justify-between p-3 rounded-lg bg-ai-glow/10">*/}
-                      {/*      <div className="flex items-center space-x-2">*/}
-                      {/*        <Image className="w-4 h-4 text-ai-glow" />*/}
-                      {/*        <span className="font-medium">Single Image</span>*/}
-                      {/*      </div>*/}
-                      {/*      <div className="text-right">*/}
-                      {/*        <div className="font-bold text-ai-glow">*/}
-                      {/*          {userStats.singleImageStats.accuracy.toFixed(1)}%*/}
-                      {/*        </div>*/}
-                      {/*        <div className="text-xs text-muted-foreground">*/}
-                      {/*          {userStats.singleImageStats.gamesPlayed} games*/}
-                      {/*        </div>*/}
-                      {/*      </div>*/}
-                      {/*    </div>*/}
-                      {/*    <div className="flex items-center justify-between p-3 rounded-lg bg-human-glow/10">*/}
-                      {/*      <div className="flex items-center space-x-2">*/}
-                      {/*        <Images className="w-4 h-4 text-human-glow" />*/}
-                      {/*        <span className="font-medium">Image Pair</span>*/}
-                      {/*      </div>*/}
-                      {/*      <div className="text-right">*/}
-                      {/*        <div className="font-bold text-human-glow">*/}
-                      {/*          {userStats.pairImageStats.accuracy.toFixed(1)}%*/}
-                      {/*        </div>*/}
-                      {/*        <div className="text-xs text-muted-foreground">*/}
-                      {/*          {userStats.pairImageStats.gamesPlayed} games*/}
-                      {/*        </div>*/}
-                      {/*      </div>*/}
-                      {/*    </div>*/}
-                      {/*    <div className="flex items-center justify-between p-3 rounded-lg bg-neural-purple/10">*/}
-                      {/*      <div className="flex items-center space-x-2">*/}
-                      {/*        <Grid3X3 className="w-4 h-4 text-neural-purple" />*/}
-                      {/*        <span className="font-medium">Image Group</span>*/}
-                      {/*      </div>*/}
-                      {/*      <div className="text-right">*/}
-                      {/*        <div className="font-bold text-neural-purple">*/}
-                      {/*          {userStats.groupImageStats.accuracy.toFixed(1)}%*/}
-                      {/*        </div>*/}
-                      {/*        <div className="text-xs text-muted-foreground">*/}
-                      {/*          {userStats.groupImageStats.gamesPlayed} games*/}
-                      {/*        </div>*/}
-                      {/*      </div>*/}
-                      {/*    </div>*/}
-                      {/*  </CardContent>*/}
-                      {/*</Card>*/}
-
                       {/* Recent Games History */}
                       <Card className="border-border/50 backdrop-blur-sm bg-card/80">
                         <CardHeader>
@@ -707,18 +664,13 @@ export default function Leaderboards() {
                                   <span className="font-medium capitalize">
                                     {game.gameMode}
                                   </span>
-                                      <Badge
-                                        className={cn(
-                                          "text-xs capitalize",
-                                        )}
-                                      >
+                                      <Badge className={cn("text-xs capitalize",)}>
                                         {game.difficulty + "%"}
                                       </Badge>
                                     </div>
                                     <div className="text-xs text-muted-foreground">
                                       {game.correctGuesses}/{game.totalImages}{" "}
                                       images
-                                      {/*• {formatDuration(game.duration)}*/}
                                     </div>
                                   </div>
                                 </div>
