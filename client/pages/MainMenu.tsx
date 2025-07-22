@@ -84,6 +84,7 @@ export default function MainMenu() {
   const handleLogout = () => {
     console.log("Logging out...");
     localStorage.setItem("token", null);
+    localStorage.setItem("username", null);
     navigate("/");
   };
   if (isLoading) {

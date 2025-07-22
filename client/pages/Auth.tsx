@@ -1,3 +1,4 @@
+import ReCAPTCHA from "react-google-recaptcha";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,13 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bot, Brain, Eye, EyeOff, Sparkles, User, Zap } from "lucide-react";
+import { Bot, Brain, Eye, EyeOff, Sparkles, User, Zap, UserCheck, Shield, Check, } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
   // Exception handling
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -32,7 +36,6 @@ export default function LoginPage() {
     setIsLoading(true);
     const username = (document.getElementById("username") as HTMLInputElement).value;
     const password = (document.getElementById("password") as HTMLInputElement).value;
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/authenticate`, {
         method: "POST",
@@ -87,7 +90,6 @@ export default function LoginPage() {
     const username = (document.getElementById("username") as HTMLInputElement).value;
     const email = (document.getElementById("registerEmail") as HTMLInputElement).value;
     const password = (document.getElementById("registerPassword") as HTMLInputElement).value;
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
@@ -135,6 +137,48 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  const handleGuestLogin = async () => {
+    if (!captchaVerified) return;
+    setIsLoading(true);
+    setIsLoading(false);
+    navigate("/menu");
+  };
+
+  const handleCaptchaChange = async (token: string | null) => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/captcha/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        throw new Error('CAPTCHA verification failed on server');
+      }
+
+      const data = await response.json();
+      console.log('Backend CAPTCHA response:', data);
+
+      if (data.success) {
+        setCaptchaVerified(true);
+      } else {
+        // Show error to user
+        setCaptchaVerified(false);
+        alert('CAPTCHA verification failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error verifying CAPTCHA:', error);
+      setCaptchaVerified(false);
+      alert('CAPTCHA verification error. Please try again.');
+    }
+  };
+
+
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -227,7 +271,7 @@ export default function LoginPage() {
           {/* Login/Register Tabs */}
           <Card className="border-border/50 backdrop-blur-sm bg-card/80">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="login" className="space-x-2">
                   <User className="w-4 h-4" />
                   <span>Sign In</span>
@@ -235,6 +279,10 @@ export default function LoginPage() {
                 <TabsTrigger value="register" className="space-x-2">
                   <Bot className="w-4 h-4" />
                   <span>Join Game</span>
+                </TabsTrigger>
+                <TabsTrigger value="guest" className="space-x-2">
+                  <UserCheck className="w-4 h-4" />
+                  <span>Guest</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -452,6 +500,73 @@ export default function LoginPage() {
                       )}
                     </Button>
                   </form>
+                </CardContent>
+              </TabsContent>
+              <TabsContent value="guest">
+                <CardHeader className="space-y-1 pb-4">
+                  <CardTitle className="text-xl">
+                    Play as Guest
+                  </CardTitle>
+                  <CardDescription>
+                    Start playing immediately without creating an account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="text-center p-6 rounded-lg bg-muted/20 border border-border/50">
+                      <Shield className="w-12 h-12 text-ai-glow mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">Verify you're human</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Complete the CAPTCHA to continue as a guest
+                      </p>
+                      {!captchaVerified ? (
+                        <div className="flex justify-center space-y-4">
+                          <ReCAPTCHA
+                            sitekey="6Lf3dosrAAAAAP4h0T0n00lyMU4X2haT1_wpp0F3"
+                            onChange={handleCaptchaChange}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="bg-human-glow/10 border border-human-glow/30 rounded-lg p-4">
+                            <div className="flex items-center justify-center space-x-2 text-sm text-human-glow">
+                              <Check className="w-4 h-4" />
+                              <span>Verification successful!</span>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={handleGuestLogin}
+                            disabled={isLoading}
+                            className={cn(
+                              "w-full bg-gradient-to-r from-human-glow to-cyber-green hover:from-human-glow/90 hover:to-cyber-green/90",
+                              "shadow-lg shadow-human-glow/25 transition-all duration-300",
+                            )}
+                          >
+                            {isLoading ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Loading...</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <UserCheck className="w-4 h-4" />
+                                <span>Enter as Guest</span>
+                              </div>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-center text-xs text-muted-foreground">
+                      <p>Guest mode limitations:</p>
+                      <ul className="mt-1 space-y-1">
+                        <li>• Progress won't be saved</li>
+                        <li>• No leaderboard participation</li>
+                        <li>• Fewer bragging rights</li>
+                      </ul>
+                    </div>
+                  </div>
                 </CardContent>
               </TabsContent>
             </Tabs>
