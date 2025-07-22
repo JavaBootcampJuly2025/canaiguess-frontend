@@ -72,6 +72,8 @@ export default function Game() {
   const [reportReason, setReportReason] = useState("");
   const [reportComment, setReportComment] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [submittedReports, setSubmittedReports] = useState<Set<string>>(new Set());
+
 
   const fetchBatchImages = async () => {
     if (!gameId) {
@@ -330,7 +332,6 @@ export default function Game() {
         fake: realHint.fake,
         signs: realHint.signs, // 2-4 signs
         // confidence: Math.floor(Math.random() * 30) + 70, // 70-99% confidence
-        // requestedAt: new Date().toISOString(),
       };
       setGameInstance((prev) => ({
         ...prev,
@@ -362,26 +363,32 @@ export default function Game() {
 
   const submitReport = async () => {
     if (!selectedHint || !reportReason.trim()) return;
+    try {
+      setIsSubmittingReport(true);
+      // Simulate API call to submit report
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    setIsSubmittingReport(true);
-
-    // Simulate API call to submit report
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    console.log("Report submitted:", {
-      hintId: selectedHint.imageId,
-      reason: reportReason,
-      comment: reportComment,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Reset form and close
-    setShowReportForm(false);
-    setReportReason("");
-    setReportComment("");
-    setIsSubmittingReport(false);
-
+      console.log("Report submitted:", {
+        hintId: selectedHint.imageId,
+        reason: reportReason,
+        comment: reportComment,
+        timestamp: new Date().toISOString(),
+      });
+      setSubmittedReports(prev => new Set(prev).add(selectedHint.imageId));
+      // Reset form and close
+      setShowReportForm(false);
+      setReportReason("");
+      setReportComment("");
     // Could show a success toast here
+    } catch (err) {
+      toast({
+        title: "Failed to submit",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingReport(false);
+    }
   };
 
   // The hardcoded dropdown list of report reasons
@@ -727,7 +734,18 @@ export default function Game() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => setShowReportForm(!showReportForm)}
+                                  onClick={() => {
+                                    if (!submittedReports.has(selectedHint.imageId)) {
+                                      setShowReportForm(true);
+                                    } else {
+                                      toast({
+                                        title: "Already reported",
+                                        description: "You've already submitted a report for this analysis.",
+                                        variant: "destructive",
+                                        className: "bg-destructive/80",
+                                      });
+                                    }
+                                  }}
                                   className="h-6 px-2 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
                                 >
                                   <Flag className="w-3 h-3 mr-1" />
