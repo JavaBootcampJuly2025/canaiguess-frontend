@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 AGENTS.md
 .config/
+
+# Local Netlify folder
+.netlify
