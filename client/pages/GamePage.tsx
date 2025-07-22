@@ -535,6 +535,15 @@ export default function Game() {
                             {badgeContent}
                           </Badge>
                         </div>
+                        <button title="View full-sized image"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMagnifyImage(image);
+                                }}
+                                className="absolute bottom-3 right-3 bg-background/70 p-2 rounded-full hover:bg-background/90"
+                        >
+                          <Search className="w-5 h-5 text-foreground" />
+                        </button>
                         <div className="absolute top-3 right-3">
                           <Button
                             size="sm"
