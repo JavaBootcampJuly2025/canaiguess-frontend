@@ -136,7 +136,7 @@ export const fetchLastGames = async (token: string):
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   console.log("Fetching last 10 games for this user");
 
-  const response = await fetch(`${API_BASE_URL}/api/history/last10`, {
+  const response = await fetch(`${API_BASE_URL}/api/user/history`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -152,7 +152,7 @@ export const fetchLastGames = async (token: string):
   return data;
 }
 
-// API call to retrieve 10 last games
+// API call to retrieve hints
 export const fetchImageHint = async (token: string, imageId: string):
   Promise<HintResponseDTO> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
