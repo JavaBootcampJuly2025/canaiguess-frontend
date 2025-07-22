@@ -20,8 +20,7 @@ export default function LoginPage() {
   const emailErrors = businessError && businessError.toLowerCase().includes("email") ? [businessError] : [];
   const [loginError, setLoginError] = useState<string | null>(null);
   const loginErrors = loginError && loginError.toLowerCase().includes("credentials")
-    ? [loginError]
-    : [];
+    ? [loginError] : [];
 
 // if later validation contains errors for email too, then they will have to be separated like business errors
   const passwordErrors = validationErrors.filter(err =>
@@ -117,7 +116,6 @@ export default function LoginPage() {
         setValidationErrors([]);
         setBusinessError(null);
       } else {
-        const data = await response.json();
         if (data.validationErrors) {
           setValidationErrors(data.validationErrors);
           setBusinessError(null); // clear any previous business error

@@ -49,7 +49,6 @@ export const fetchBatchImagesFromApi = async (
   }
 
   const data: ImageBatchResponseDTO = await response.json();
-  console.log(data);
   if (!Array.isArray(data.images)) {
     throw new Error("API response does not contain 'images' array.");
   }
@@ -114,7 +113,7 @@ export const submitGuessesRequest = async (
 export const fetchGameResults = async (gameId: string, token: string):
 Promise<GameResult> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  console.log("Fetching game results for:", gameId);
+  // console.log("Fetching game results for:", gameId);
   const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/results`, {
     method: "POST",
     headers: {
@@ -127,7 +126,6 @@ Promise<GameResult> => {
   }
   const text = await response.text();
   const data = JSON.parse(text);
-  console.log(data);
 
   return data;
 };
@@ -150,7 +148,6 @@ export const fetchLastGames = async (token: string):
   }
   const text = await response.text();
   const data = JSON.parse(text);
-  // console.log(data);
 
   return data;
 }
@@ -173,7 +170,6 @@ export const fetchImageHint = async (token: string, imageId: string):
   }
   const text = await response.text();
   const data = JSON.parse(text);
-  // console.log(data);
-
+  
   return data;
 }

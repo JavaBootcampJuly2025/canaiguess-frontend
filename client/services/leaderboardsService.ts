@@ -2,7 +2,7 @@
 export const fetchGlobalLeaderboard = async () => {
   const token = localStorage.getItem("token");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  console.log("fetching score leaderboard");
+  // console.log("fetching score leaderboard");
   const response = await fetch(`${API_BASE_URL}/api/leaderboard`, {
     method: "GET",
     headers: {
@@ -14,7 +14,6 @@ export const fetchGlobalLeaderboard = async () => {
   if (!response.ok) {
     throw new Error(await response.text());
   }
-
   const data = await response.json();
 
   if (!Array.isArray(data)) {
@@ -41,7 +40,7 @@ export const fetchGlobalLeaderboard = async () => {
 export const fetchGlobalAccuracyLeaderboard = async () => {
   const token = localStorage.getItem("token");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  console.log("fetching accuracy leaderboard");
+  // console.log("fetching accuracy leaderboard");
   const response = await fetch(`${API_BASE_URL}/api/leaderboard/accuracy`, {
     method: "GET",
     headers: {
@@ -53,7 +52,6 @@ export const fetchGlobalAccuracyLeaderboard = async () => {
   if (!response.ok) {
     throw new Error(await response.text());
   }
-
   const data = await response.json();
 
   if (!Array.isArray(data)) {
