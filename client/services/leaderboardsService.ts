@@ -41,7 +41,7 @@ export const fetchGlobalAccuracyLeaderboard = async () => {
   const token = localStorage.getItem("token");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // console.log("fetching accuracy leaderboard");
-  const response = await fetch(`${API_BASE_URL}/api/leaderboard/accuracy`, {
+  const response = await fetch(`${API_BASE_URL}/api/leaderboard`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

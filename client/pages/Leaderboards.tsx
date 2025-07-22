@@ -127,7 +127,6 @@ export default function Leaderboards() {
     gamesThisWeek: 23,
     gamesThisMonth: 67,
     globalRank: 47,
-    skillTier: "expert",
     lastPlayedAt: new Date().toISOString(),
     joinedAt: "2024-01-15T00:00:00Z",
   });
