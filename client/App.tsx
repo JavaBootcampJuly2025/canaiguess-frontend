@@ -9,7 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
 import GamePage from "./pages/GamePage";
-import NotFound from "./pages/NotFound";
+import NotFound from "./pages/404";
 import GameOver from "./pages/GameOver";
 import Leaderboards from "./pages/Leaderboards";
 
