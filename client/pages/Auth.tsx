@@ -103,9 +103,17 @@ export default function LoginPage() {
           password,
         }),
       });
-
+      const data = await response.json();
       if (response.ok) {
         console.log("Registration successful!");
+        const token = data.token;
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("username", username);
+          navigate("/menu");
+        } else {
+          alert("Registration succeeded but no token returned.");
+        }
         setValidationErrors([]);
         setBusinessError(null);
       } else {
