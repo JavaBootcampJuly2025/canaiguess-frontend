@@ -6,6 +6,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {PrivateRoute, GuestOrUserRoute, PublicRoute} from "@/components/RouteGuards";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
 import GamePage from "./pages/GamePage";
@@ -22,11 +23,37 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Auth />} />
-          <Route path="/menu" element={<MainMenu />} />
-          <Route path="/leaderboards" element={<Leaderboards />} />
-          <Route path="/game/:gameId" element={<GamePage />} />
-          <Route path="/game/:gameId/results/" element={<GameOver />} />
+          {/* Only unauthorized users (no token) can access login page */}
+          <Route path="/" element={
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          } />
+
+          {/* Guests & logged-in users can access these */}
+          <Route path="/menu" element={
+            <GuestOrUserRoute>
+              <MainMenu />
+            </GuestOrUserRoute>
+          } />
+          <Route path="/game/:gameId" element={
+            <GuestOrUserRoute>
+              <GamePage />
+            </GuestOrUserRoute>
+          } />
+          <Route path="/game/:gameId/results/" element={
+            <GuestOrUserRoute>
+              <GameOver />
+            </GuestOrUserRoute>
+          } />
+
+          {/* Logged-in users only */}
+          <Route path="/leaderboards" element={
+            <PrivateRoute>
+              <Leaderboards />
+            </PrivateRoute>
+          } />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

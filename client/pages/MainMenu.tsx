@@ -40,6 +40,7 @@ export default function MainMenu() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
+  const isGuest = localStorage.getItem("isGuest") === "true";
   const [gameMode, setGameMode] = useState("1"); // new state
 
   const handleStartGame = async (e: React.FormEvent) => {
@@ -83,8 +84,8 @@ export default function MainMenu() {
 
   const handleLogout = () => {
     console.log("Logging out...");
-    localStorage.setItem("token", null);
-    localStorage.setItem("username", null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
     navigate("/");
   };
   if (isLoading) {
@@ -218,7 +219,11 @@ export default function MainMenu() {
             </div>
 
             {/* Main Action Cards */}
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div
+              className={`grid gap-6 max-w-4xl mx-auto ${
+                isGuest ? "grid-cols-1" : "md:grid-cols-2"
+              }`}
+            >
               {/* Play Game Card */}
               <Card
                 className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-ai-glow/10 transition-all duration-300">
@@ -403,7 +408,6 @@ export default function MainMenu() {
                           </div>
                         </div>
 
-
                         <Button
                           onClick={handleStartGame}
                           className={cn(
@@ -420,31 +424,35 @@ export default function MainMenu() {
                 </CardContent>
               </Card>
 
+
               {/* Leaderboards Card */}
-              <Card
-                className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-human-glow/10 transition-all duration-300">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-xl">
-                    <div className="p-2 rounded-lg bg-human-glow/10">
-                      <Trophy className="w-6 h-6 text-human-glow" />
-                    </div>
-                    <span>Leaderboards & Stats</span>
-                  </CardTitle>
-                  <CardDescription>
-                    View global rankings and your performance metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => navigate("/leaderboards")}
-                    variant="outline"
-                    className="w-full h-12 border-human-glow/30 hover:bg-human-glow/10 hover:border-human-glow/50 text-base font-semibold"
-                  >
-                    <BarChart3 className="w-5 h-5 mr-2" />
-                    View Statistics
-                  </Button>
-                </CardContent>
-              </Card>
+              {localStorage.getItem("isGuest") == "false" && (
+                <Card
+                  className="border-border/50 backdrop-blur-sm bg-card/80 hover:shadow-xl hover:shadow-human-glow/10 transition-all duration-300"
+                >
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-2 text-xl">
+                      <div className="p-2 rounded-lg bg-human-glow/10">
+                        <Trophy className="w-6 h-6 text-human-glow" />
+                      </div>
+                      <span>Leaderboards & Stats</span>
+                    </CardTitle>
+                    <CardDescription>
+                      View global rankings and your performance metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => navigate("/leaderboards")}
+                      variant="outline"
+                      className="w-full h-12 border-human-glow/30 hover:bg-human-glow/10 hover:border-human-glow/50 text-base font-semibold"
+                    >
+                      <BarChart3 className="w-5 h-5 mr-2" />
+                      View Statistics
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Stats Overview */}
