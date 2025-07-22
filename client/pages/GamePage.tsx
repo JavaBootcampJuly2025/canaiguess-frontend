@@ -24,6 +24,9 @@ import {
   Sparkles,
   Target,
   User, Zap, X,
+  Flag,
+  ChevronDown,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
@@ -64,6 +67,11 @@ export default function Game() {
   const [guessFeedback, setGuessFeedback] = useState<Record<string, boolean | null>>({});
   const [selectedImageForHint, setSelectedImageForHint] = useState<ImageDTO | null>(null);
   const [focusedImage, setFocusedImage] = useState<ImageDTO | null>(null);
+
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportComment, setReportComment] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const fetchBatchImages = async () => {
     if (!gameId) {
@@ -352,6 +360,40 @@ export default function Game() {
     }
   };
 
+  const submitReport = async () => {
+    if (!selectedHint || !reportReason.trim()) return;
+
+    setIsSubmittingReport(true);
+
+    // Simulate API call to submit report
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    console.log("Report submitted:", {
+      hintId: selectedHint.imageId,
+      reason: reportReason,
+      comment: reportComment,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Reset form and close
+    setShowReportForm(false);
+    setReportReason("");
+    setReportComment("");
+    setIsSubmittingReport(false);
+
+    // Could show a success toast here
+  };
+
+  // The hardcoded dropdown list of report reasons
+  const reportReasons = [
+    "Incorrect analysis verdict",
+    "Missing important detection indicators",
+    "Analysis contradicts obvious visual evidence",
+    "Analysis appears to be hallucinating",
+    "Technical error or glitch",
+    "Inappropriate or offensive content",
+    "Other issue not listed above",
+  ];
 
   const getImageGuess = (imageId: string): boolean | null => {
     return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
@@ -586,118 +628,6 @@ export default function Game() {
                         >
                           <Search className="w-5 h-5 text-foreground" />
                         </button>
-
-
-                        {/*<div className="absolute top-3 right-3">*/}
-                        {/*  <Dialog*/}
-                        {/*    open={selectedHint?.imageId === image.id}*/}
-                        {/*    onOpenChange={(open) => {*/}
-                        {/*      if (!open) setSelectedHint(null);*/}
-                        {/*    }}*/}
-                        {/*  >*/}
-                        {/*    <DialogTrigger asChild>*/}
-                        {/*      <Button*/}
-                        {/*        size="sm"*/}
-                        {/*        variant={hasUsedHint(image.id) ? "default" : "secondary"}*/}
-                        {/*        onClick={() => {*/}
-                        {/*          const existingHint = getHintForImage(image.id);*/}
-                        {/*          if (existingHint) {*/}
-                        {/*            setSelectedHint(existingHint);*/}
-                        {/*          } else {*/}
-                        {/*            requestHint(image.id);*/}
-                        {/*          }*/}
-                        {/*        }}*/}
-                        {/*        disabled={isRequestingHint === image.id}*/}
-                        {/*        className={cn(*/}
-                        {/*          "bg-background/80 backdrop-blur-sm hover:bg-background/90",*/}
-                        {/*          hasUsedHint(image.id) &&*/}
-                        {/*          "bg-ai-glow/20 text-ai-glow border-ai-glow/30 hover:bg-ai-glow/30",*/}
-                        {/*        )}*/}
-                        {/*      >*/}
-                        {/*        {isRequestingHint === image.id ? (*/}
-                        {/*          <div*/}
-                        {/*            className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />*/}
-                        {/*        ) : (*/}
-                        {/*          <Lightbulb className="w-4 h-4" />*/}
-                        {/*        )}*/}
-                        {/*      </Button>*/}
-                        {/*    </DialogTrigger>*/}
-                        {/*    {selectedHint && selectedHint.imageId === image.id && (*/}
-                        {/*      <DialogContent className="max-w-md">*/}
-                        {/*        <DialogHeader>*/}
-                        {/*          <DialogTitle className="flex items-center space-x-2">*/}
-                        {/*            <Brain className="w-5 h-5 text-ai-glow" />*/}
-                        {/*            <span>AI Analysis</span>*/}
-                        {/*            <Badge*/}
-                        {/*              variant="outline"*/}
-                        {/*              className="text-xs"*/}
-                        {/*            >*/}
-                        {/*              95% confident*/}
-                        {/*            </Badge>*/}
-                        {/*          </DialogTitle>*/}
-                        {/*          <DialogDescription>*/}
-                        {/*            Our AI has analyzed this image for authenticity*/}
-                        {/*          </DialogDescription>*/}
-                        {/*        </DialogHeader>*/}
-                        {/*        <div className="space-y-4">*/}
-                        {/*          /!* AI's verdict *!/*/}
-                        {/*          <div*/}
-                        {/*            className={cn(*/}
-                        {/*              "p-4 rounded-lg border flex items-center space-x-3",*/}
-                        {/*              selectedHint.fake*/}
-                        {/*                ? "bg-destructive/10 border-destructive/20"*/}
-                        {/*                : "bg-human-glow/10 border-human-glow/20",*/}
-                        {/*            )}*/}
-                        {/*          >*/}
-                        {/*            {selectedHint.fake ? (*/}
-                        {/*              <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />*/}
-                        {/*            ) : (*/}
-                        {/*              <CheckCircle className="w-5 h-5 text-human-glow flex-shrink-0" />*/}
-                        {/*            )}*/}
-                        {/*            <div>*/}
-                        {/*              <div className="font-semibold">*/}
-                        {/*                {selectedHint.fake*/}
-                        {/*                  ? "Likely AI Generated"*/}
-                        {/*                  : "Likely Human Created"}*/}
-                        {/*              </div>*/}
-                        {/*              <div className="text-sm text-muted-foreground">*/}
-                        {/*                {selectedHint.fake*/}
-                        {/*                  ? "This image shows signs of artificial generation"*/}
-                        {/*                  : "This image appears to be authentic"}*/}
-                        {/*              </div>*/}
-                        {/*            </div>*/}
-                        {/*          </div>*/}
-
-                        {/*          /!* Analysis points *!/*/}
-                        {/*          <div className="space-y-3">*/}
-                        {/*            <h4 className="font-semibold flex items-center space-x-2">*/}
-                        {/*              <Eye className="w-4 h-4" />*/}
-                        {/*              <span>Key Indicators:</span>*/}
-                        {/*            </h4>*/}
-                        {/*            <div className="space-y-2">*/}
-                        {/*              {selectedHint.signs.map((sign, idx) => (*/}
-                        {/*                <div*/}
-                        {/*                  key={idx}*/}
-                        {/*                  className="flex items-start space-x-2 text-sm"*/}
-                        {/*                >*/}
-                        {/*                  <div className="w-1.5 h-1.5 rounded-full bg-ai-glow mt-2 flex-shrink-0" />*/}
-                        {/*                  <span>{sign}</span>*/}
-                        {/*                </div>*/}
-                        {/*              ))}*/}
-                        {/*            </div>*/}
-                        {/*          </div>*/}
-
-                        {/*          /!* Disclaimer *!/*/}
-                        {/*          <div className="text-xs text-muted-foreground p-3 bg-muted/50 rounded border">*/}
-                        {/*            <strong>Note:</strong> This is AI analysis and may not be*/}
-                        {/*            100% accurate. Use this as guidance to help train your own*/}
-                        {/*            detection skills.*/}
-                        {/*          </div>*/}
-                        {/*        </div>*/}
-                        {/*      </DialogContent>*/}
-                        {/*    )}*/}
-                        {/*  </Dialog>*/}
-                        {/*</div>*/}
                       </div>
 
                       {gameConfig.batchSize === 1 ? (
@@ -740,7 +670,10 @@ export default function Game() {
             {/* Image Overlay with Hints */}
             {selectedImageForHint && (
               <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-                <div className="max-w-7xl w-full max-h-[90vh] flex flex-col lg:flex-row gap-6">
+                <div className={cn(
+                  "max-w-7xl w-full max-h-[90vh] flex flex-col gap-6",
+                  showReportForm ? "xl:flex-row" : "lg:flex-row"
+                )}>
                   {/* Image Container */}
                   <div className="flex-1 flex flex-col">
                     <div className="aspect-[4/3] lg:aspect-auto lg:flex-1 relative rounded-lg overflow-hidden bg-card border border-border/50">
@@ -770,7 +703,10 @@ export default function Game() {
                     </div>
                   </div>
                   {/* Hints Panel */}
-                  <div className="w-full lg:w-[40rem] lg:max-h-full overflow-y-auto">
+                  <div className={cn(
+                    "w-full lg:max-h-full overflow-y-auto",
+                    showReportForm ? "xl:w-96" : "lg:w-96"
+                  )}>
                     <Card className="border-border/50 backdrop-blur-sm bg-card/95 h-full">
                       <CardContent className="p-6 space-y-6">
                         {isRequestingHint === selectedImageForHint.id ? (
@@ -788,9 +724,15 @@ export default function Game() {
                               <div className="flex items-center space-x-2">
                                 <Brain className="w-6 h-6 text-ai-glow" />
                                 <h2 className="text-xl font-bold">AI Analysis</h2>
-                                <Badge variant="outline" className="text-sm">
-                                  95% confident
-                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setShowReportForm(!showReportForm)}
+                                  className="h-6 px-2 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+                                >
+                                  <Flag className="w-3 h-3 mr-1" />
+                                  Report
+                                </Button>
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 Detailed analysis of authenticity markers and generation signs
@@ -882,6 +824,117 @@ export default function Game() {
                       </CardContent>
                     </Card>
                   </div>
+                  {/* Report Panel */}
+                  {showReportForm && (
+                    <div className="w-full xl:w-80 xl:max-h-full overflow-y-auto">
+                      <Card className="border-red-500/20 backdrop-blur-sm bg-card/95 h-full">
+                        <CardContent className="p-6 space-y-6">
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <Flag className="w-5 h-5 text-red-400" />
+                              <h3 className="text-lg font-bold">Report AI Analysis</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Help us improve by reporting issues with this AI analysis
+                            </p>
+                          </div>
+
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              submitReport();
+                            }}
+                            className="space-y-6"
+                          >
+                            {/* Report Reason */}
+                            <div className="space-y-3">
+                              <label className="text-sm font-semibold">Reason for Report</label>
+                              <div className="relative">
+                                <select
+                                  value={reportReason}
+                                  onChange={(e) => setReportReason(e.target.value)}
+                                  className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                                  required
+                                >
+                                  <option value="">Select a reason...</option>
+                                  {reportReasons.map((reason, index) => (
+                                    <option key={index} value={reason}>
+                                      {reason}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                              </div>
+                            </div>
+
+                            {/* Additional Comments */}
+                            <div className="space-y-3">
+                              <label className="text-sm font-semibold">Additional Comments</label>
+                              <textarea
+                                value={reportComment}
+                                onChange={(e) => setReportComment(e.target.value)}
+                                placeholder="Please provide more details about the issue (optional)..."
+                                className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                                rows={4}
+                              />
+                            </div>
+
+                            {/* Character count */}
+                            <div className="text-xs text-muted-foreground text-right">
+                              {reportComment.length}/500 characters
+                            </div>
+
+                            {/* Submit Buttons */}
+                            <div className="flex gap-3 pt-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setShowReportForm(false);
+                                  setReportReason("");
+                                  setReportComment("");
+                                }}
+                                className="flex-1"
+                                disabled={isSubmittingReport}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="submit"
+                                disabled={!reportReason.trim() || isSubmittingReport}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                {isSubmittingReport ? (
+                                  <div className="flex items-center space-x-2">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Submitting...</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center space-x-2">
+                                    <Send className="w-4 h-4" />
+                                    <span>Submit Report</span>
+                                  </div>
+                                )}
+                              </Button>
+                            </div>
+                          </form>
+
+                          {/* Report Info */}
+                          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                            <div className="flex items-start space-x-2">
+                              <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs text-yellow-600">
+                                <div className="font-medium mb-1">Report Information</div>
+                                <div className="text-yellow-600/80">
+                                  Reports help us improve AI accuracy and fix issues. Your feedback is anonymous and valuable.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
