@@ -357,9 +357,11 @@ export default function Game() {
 
   const submitReport = async () => {
     if (!selectedHint || !reportReason.trim()) return;
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     try {
+      const imageId = selectedHint.imageId;
       setIsSubmittingReport(true);
-      const response = await fetch(`/api/image/${selectedHint.imageId}/report`, {
+      const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/report`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

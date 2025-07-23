@@ -24,19 +24,16 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AccuracyLeaderboard, Leaderboard, RecentGame, UserStats } from "@/types/Leaderboards";
-import { fetchGlobalAccuracyLeaderboard, fetchGlobalLeaderboard } from "@/services/leaderboardsService";
+import { fetchGlobalLeaderboard } from "@/services/leaderboardsService";
 import { fetchGameData, fetchLastGames } from "@/services/gameService";
 
 export default function Leaderboards() {
   const navigate = useNavigate();
   const [globalLeaderboard, setGlobalLeaderboard] =
     useState<Leaderboard | null>(null);
-  const [globalAccuracyLeaderboard, setGlobalAccuracyLeaderboard] =
-    useState<AccuracyLeaderboard | null>(null);
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
 
   const [isScoreLoading, setIsScoreLoading] = useState(true);
-  const [isAccuracyLoading, setIsAccuracyLoading] = useState(true);
   const [isPersonalLoading, setIsPersonalLoading] = useState(true);
 
   const [scoreLoaded, setScoreLoaded] = useState(false);
@@ -44,7 +41,6 @@ export default function Leaderboards() {
   const [personalLoaded, setPersonalLoaded] = useState(false);
 
   const scorePromise = useRef<Promise<void> | null>(null);
-  const accuracyPromise = useRef<Promise<void> | null>(null);
   const personalPromise = useRef<Promise<void> | null>(null);
 
   const [currentTab, setCurrentTab] = useState("score");
@@ -58,17 +54,6 @@ export default function Leaderboards() {
       });
     }
     return scorePromise.current;
-  };
-
-  const loadAccuracy = () => {
-    if (!accuracyPromise.current) {
-      accuracyPromise.current = generateGlobalAccuracyLeaderboard().then((data) => {
-        setGlobalAccuracyLeaderboard(data);
-        setIsAccuracyLoading(false);
-        setAccuracyLoaded(true);
-      });
-    }
-    return accuracyPromise.current;
   };
 
   const loadPersonal = () => {
@@ -151,27 +136,6 @@ export default function Leaderboards() {
     };
   };
 
-  const generateGlobalAccuracyLeaderboard = async (): Promise<AccuracyLeaderboard> => {
-    const leaderboard = await fetchGlobalAccuracyLeaderboard();
-    console.log(leaderboard);
-    return {
-      type: "global",
-      entries: leaderboard.map((player, index) => ({
-        userId:
-          player.username === "Neural Detective"
-            ? "current-user"
-            : `player-${index}`,
-        username: player.username,
-        accuracy: player.accuracy,
-        score: 0, //placeholder
-        rank: index + 1,
-        isCurrentUser: player.username === localStorage.getItem("username"),
-      })),
-      totalPlayers: 15847,
-      lastUpdated: new Date().toISOString(),
-    };
-  };
-
   const retrieveRecentGames = async (): Promise<RecentGame[]> => {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("No auth token found");
@@ -214,7 +178,6 @@ export default function Leaderboards() {
   useEffect(() => {
     // Always start background loads right away:
     loadScore();
-    loadAccuracy();
     loadPersonal();
   }, []);
 
@@ -224,9 +187,6 @@ export default function Leaderboards() {
     if (currentTab === "score") {
       loadScore();
       console.log("Awaiting score");
-    } else if (currentTab === "accuracy") {
-      loadAccuracy();
-      console.log("Awaiting accuracy");
     } else if (currentTab === "personal") {
       console.log("Awaiting personal");
       loadPersonal();
@@ -235,11 +195,6 @@ export default function Leaderboards() {
 
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab);
-
-    if (tab === "accuracy" && !accuracyLoaded) {
-      setIsAccuracyLoading(true);
-      loadAccuracy(); // uses the single ref + sets flags
-    }
 
     if (tab === "personal" && !personalLoaded) {
       setIsPersonalLoading(true);
