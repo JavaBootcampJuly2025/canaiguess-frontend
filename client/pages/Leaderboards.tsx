@@ -193,7 +193,7 @@ export default function Leaderboards() {
         id: `game-${game.id}`,
         score: game.score,
         gameMode,
-        accuracy: Math.round(gameData.accuracy * 1000) / 10,
+        accuracy: gameData.accuracy,
         totalImages,
         correctGuesses: gameData.correct,
         difficulty: gameData.difficulty,

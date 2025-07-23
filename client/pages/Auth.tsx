@@ -112,6 +112,7 @@ export default function LoginPage() {
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("username", username);
+          localStorage.setItem("isGuest", "false");
           navigate("/menu");
         } else {
           alert("Registration succeeded but no token returned.");
