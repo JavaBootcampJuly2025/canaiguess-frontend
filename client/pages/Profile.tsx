@@ -3,12 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { RecentGame } from "@/types/Leaderboards";
 import {
@@ -29,7 +27,6 @@ import {
   Shield,
   Settings,
   Camera,
-  Save,
   Eye,
   EyeOff,
   BarChart3,
@@ -46,17 +43,17 @@ import { cn } from "@/lib/utils";
 import {
   UserProfile,
   ChangePasswordRequest,
-  SecuritySettings,
 } from "@/types/Profile";
-import { UserStats } from "@/types/Stats";
 import { fetchGameData, fetchLastGames } from "@/services/gameService";
+import { fetchUserStats } from "@/services/UserService";
+import { UserDTO } from "@/dto/UserDTO";
 
 export default function Profile() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [userStats, setUserStats] = useState<UserDTO | null>(null);
 
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [isPersonalLoading, setIsPersonalLoading] = useState(true);
@@ -65,10 +62,7 @@ export default function Profile() {
   const personalPromise = useRef<Promise<void> | null>(null);
 
   const [currentTab, setCurrentTab] = useState("score");
-  
-  
-  const [securitySettings, setSecuritySettings] =
-    useState<SecuritySettings | null>(null);
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState<ChangePasswordRequest>({
@@ -91,7 +85,7 @@ export default function Profile() {
     if (!token) throw new Error("No auth token found");
 
     // Fetch last games list
-    const lastGames  = await fetchLastGames(token); // returns [{ gameId, pointsEarned }, ...]
+    const lastGames  = await fetchLastGames(token);
 
     // Fetch gameData and gameResult in parallel for each game
     const enrichedGamesPromises = lastGames.map(async (game) => {
@@ -150,86 +144,12 @@ export default function Profile() {
     language: "en",
   });
 
-  const generateMockUserStats = (): UserStats => ({
-    userId: "current-user",
-    username: "Neural Detective",
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=neural-detective`,
-    totalScore: 8742,
-    totalGamesPlayed: 156,
-    totalImagesGuessed: 1248,
-    totalCorrectGuesses: 1098,
-    overallAccuracy: 88.0,
-    bestAccuracy: 100.0,
-    bestScore: 980,
-    singleImageStats: {
-      gamesPlayed: 67,
-      totalImages: 670,
-      correctGuesses: 602,
-      accuracy: 89.9,
-      bestAccuracy: 100.0,
-      averageScore: 89.5,
-      bestScore: 980,
-    },
-    pairImageStats: {
-      gamesPlayed: 45,
-      totalImages: 450,
-      correctGuesses: 378,
-      accuracy: 84.0,
-      bestAccuracy: 95.0,
-      averageScore: 84.2,
-      bestScore: 950,
-    },
-    groupImageStats: {
-      gamesPlayed: 44,
-      totalImages: 308,
-      correctGuesses: 268,
-      accuracy: 87.0,
-      bestAccuracy: 100.0,
-      averageScore: 87.8,
-      bestScore: 1000,
-    },
-    currentStreak: 12,
-    longestStreak: 28,
-    gamesThisWeek: 23,
-    gamesThisMonth: 67,
-    globalRank: 47,
-    skillTier: "expert",
-    lastPlayedAt: new Date().toISOString(),
-    joinedAt: "2024-01-15T00:00:00Z",
-  });
-
-  const generateMockSecuritySettings = (): SecuritySettings => ({
-    twoFactorEnabled: false,
-    lastPasswordChange: "2024-02-01T00:00:00Z",
-    activeSessions: [
-      {
-        id: "session-1",
-        deviceName: "Chrome on MacBook Pro",
-        location: "San Francisco, CA",
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        lastActive: new Date().toISOString(),
-        isCurrent: true,
-      },
-      {
-        id: "session-2",
-        deviceName: "Safari on iPhone",
-        location: "San Francisco, CA",
-        ipAddress: "192.168.1.101",
-        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-        lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        isCurrent: false,
-      },
-    ],
-    trustedDevices: [
-      {
-        id: "device-1",
-        deviceName: "MacBook Pro",
-        addedAt: "2024-01-15T00:00:00Z",
-        lastUsed: new Date().toISOString(),
-      },
-    ],
-  });
+  const getUserStats = async (): Promise<UserDTO> => {
+    const token = localStorage.getItem("token");
+    const username = localStorage.getItem("username");
+    const userStats  = await fetchUserStats(token, username);
+    return userStats;
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -239,12 +159,9 @@ export default function Profile() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const mockProfile = generateMockProfile();
-      const mockUserStats = generateMockUserStats();
-      const mockSecuritySettings = generateMockSecuritySettings();
-
+      const userStats = await getUserStats();
       setProfile(mockProfile);
-      setUserStats(mockUserStats);
-      setSecuritySettings(mockSecuritySettings);
+      setUserStats(userStats);
       setIsLoading(false);
     };
 
@@ -397,7 +314,7 @@ export default function Profile() {
                 </Button>
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{profile.username}</h1>
+                <h1 className="text-3xl font-bold">{localStorage.getItem("username")}</h1>
                 <p className="text-muted-foreground">{profile.email}</p>
                 {profile.isEmailVerified && (
                   <Badge className="mt-2 bg-human-glow/20 text-human-glow border-human-glow/30">
@@ -431,23 +348,23 @@ export default function Profile() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 rounded-lg bg-ai-glow/10">
                     <div className="text-2xl font-bold text-ai-glow">
-                      #{userStats.globalRank}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Global Rank
-                    </div>
-                  </div>
-                  <div className="text-center p-4 rounded-lg bg-human-glow/10">
-                    <div className="text-2xl font-bold text-human-glow">
-                      {userStats.totalScore.toLocaleString()}
+                      {userStats.score}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Total Score
                     </div>
                   </div>
+                  <div className="text-center p-4 rounded-lg bg-human-glow/10">
+                    <div className="text-2xl font-bold text-human-glow">
+                      {userStats.totalGuesses.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Total Guesses
+                    </div>
+                  </div>
                   <div className="text-center p-4 rounded-lg bg-neural-purple/10">
                     <div className="text-2xl font-bold text-neural-purple">
-                      {userStats.overallAccuracy.toFixed(1)}%
+                      {userStats.accuracy.toFixed(1) * 100}%
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Accuracy
@@ -455,7 +372,7 @@ export default function Profile() {
                   </div>
                   <div className="text-center p-4 rounded-lg bg-electric-blue/10">
                     <div className="text-2xl font-bold text-electric-blue">
-                      {userStats.totalGamesPlayed}
+                      {userStats.totalGames}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Games Played
@@ -491,7 +408,7 @@ export default function Profile() {
                         <div className="flex space-x-2">
                           <Input
                             id="username"
-                            value={profile.username}
+                            value={localStorage.getItem("username")}
                             onChange={(e) =>
                               setProfile({ ...profile, username: e.target.value })
                             }
@@ -664,7 +581,6 @@ export default function Profile() {
                 </Card>
               </TabsContent>
 
-
               {/* Personal Statistics Tab */}
               <TabsContent value="lastGames" className="space-y-6">
                 {/* User Stats Overview */}
@@ -725,7 +641,6 @@ export default function Profile() {
                                       {game.accuracy.toFixed(1)}%
                                     </div>
                                   )}
-
                                 </div>
                               </div>
                             ))}
