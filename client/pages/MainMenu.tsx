@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
+import { createNewGame } from "@/services/gameService";
 
 export default function MainMenu() {
   // Default values for new game
@@ -50,29 +51,15 @@ export default function MainMenu() {
 
     // Use custom batch size if group mode is selected, else fix
     const finalBatchSize = gameMode === "group" ? batchSize : gameMode;
-
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/game`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          batchCount,
-          batchSize: finalBatchSize,
-          difficulty,
-        }),
-      });
+      const data = await createNewGame(Number(batchCount), Number(finalBatchSize), Number(difficulty), token);
 
-      if (response.ok) {
-        const data: NewGameResponseDTO = await response.json();
+      if (data) {
         navigate("/game/" + data.gameId);
       } else {
-        console.error("Game not created:", await response.text());
+        console.error("Game not created!");
       }
     } catch (error) {
       console.error("Error:", error);

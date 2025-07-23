@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
-import { fetchBatchImagesFromApi, fetchImageHint, submitGuessesRequest } from "@/services/gameService";
+import { fetchBatchImagesFromApi, fetchImageHint, submitGuessesRequest, fetchGameData } from "@/services/gameService";
 import { ImageDTO } from "@/dto/ImageBatchResponseDTO";
 import { HintResponseDTO } from "@/dto/HintResponseDTO";
 
@@ -90,21 +90,11 @@ export default function Game() {
 
   useEffect(() => {
     const fetchGame = async () => {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/game/${gameId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setGameConfig(data);
-        if (data.currentBatch == 0)
-          data.currentBatch = 1;
-      } else {
-        console.error("Game not found");
-      }
+      const response = await fetchGameData(gameId, token);
+        setGameConfig(response);
+        if (response.currentBatch == 0)
+          response.currentBatch = 1;
     };
 
     fetchGame();
@@ -222,6 +212,7 @@ export default function Game() {
         });
 
         guesses = allGuesses;
+        console.log("Guesses: " + guesses + " - batch: "+ gameConfig.batchSize);
       }
       const result = await submitGuessesRequest(
         gameId,
@@ -851,7 +842,7 @@ export default function Game() {
                         ) : (
                           <div className="flex flex-col items-center justify-center py-12 space-y-4">
                             <Lightbulb className="w-12 h-12 text-human-glow" />
-
+                            <p>Sorry, we only help real users.</p>
 
                           </div>
                         )}

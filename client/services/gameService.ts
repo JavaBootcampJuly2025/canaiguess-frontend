@@ -4,15 +4,17 @@ import { HintResponseDTO } from "@/dto/HintResponseDTO";
 import { ImageBatchResponseDTO, ImageDTO } from "@/dto/ImageBatchResponseDTO";
 
 // API call to fetch game data
-export const fetchGameData = async (gameId: string, token: string) => {
+export const fetchGameData = async (gameId: string, token: string | null) => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const response = await fetch(`${API_BASE_URL}/api/game/${gameId}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
   if (!response.ok) {
@@ -20,10 +22,10 @@ export const fetchGameData = async (gameId: string, token: string) => {
   }
   const text = await response.text();
   const data = JSON.parse(text);
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
+// console.log(data);
+//   if (!response.ok) {
+//     throw new Error(await response.text());
+//   }
 
   return data;
 };
@@ -34,13 +36,15 @@ export const fetchBatchImagesFromApi = async (
   token: string
 ): Promise<ImageDTO[]> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/batch`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
   if (!response.ok) {
@@ -62,13 +66,15 @@ export const createNewGame = async (
   token: string | null
 ): Promise<NewGameResponseDTO> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const response = await fetch(`${API_BASE_URL}/api/game`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify({
       batchCount,
       batchSize,
@@ -89,13 +95,16 @@ export const submitGuessesRequest = async (
   token: string | null
 ): Promise<{ correct: boolean[] }> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
   const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/guess`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify({
       guesses: guesses,
     }),
