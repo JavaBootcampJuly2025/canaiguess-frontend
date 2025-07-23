@@ -49,11 +49,14 @@ export default function LoginPage() {
       if (response.ok) {
         // Login success
         const token = data.token;
+        const username = data.username;
+        const role = data.username;
 
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("username", username);
           localStorage.setItem("isGuest", "false");
+          localStorage.setItem("role", role);
           navigate("/menu");
         } else {
           alert("Login succeeded but no token returned.");
@@ -109,10 +112,13 @@ export default function LoginPage() {
       if (response.ok) {
         console.log("Registration successful!");
         const token = data.token;
+        const username = data.username;
+        const role = data.username;
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("username", username);
           localStorage.setItem("isGuest", "false");
+          localStorage.setItem("role", role);
           navigate("/menu");
         } else {
           alert("Registration succeeded but no token returned.");
@@ -143,6 +149,7 @@ export default function LoginPage() {
   const handleGuestLogin = async () => {
     if (!captchaVerified) return;
     localStorage.setItem("isGuest", "true");
+    localStorage.setItem("role", "guest");
     navigate("/menu");
   };
 
