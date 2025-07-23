@@ -191,15 +191,16 @@ export default function MainMenu() {
               <User className="w-4 h-4" />
               <span>{username}</span>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/profile")}
-              className="border-border/50"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </Button>
+            {localStorage.getItem("isGuest") == "false" && (<Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/profile")}
+                className="border-border/50"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
