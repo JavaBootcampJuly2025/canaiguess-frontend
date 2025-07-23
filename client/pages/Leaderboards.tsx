@@ -341,23 +341,16 @@ export default function Leaderboards() {
 
             {/* Main Tabs */}
             <Tabs value={currentTab} onValueChange={handleTabChange} defaultValue="global" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
+              <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
                 <TabsTrigger
                   value="score"
-                  className="flex items-center space-x-3"
+                  className="flex items-center space-x-2"
                 >
                   <Trophy className="w-4 h-4" />
                   <span>Score Top</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="accuracy"
-                  className="flex items-center space-x-2"
-                >
-                  <Target className="w-4 h-4" />
-                  <span>Accuracy Top</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="personal"
                   className="flex items-center space-x-2"
                 >
                   <User className="w-4 h-4" />
@@ -468,110 +461,6 @@ export default function Leaderboards() {
                     </CardContent>
                   </Card>}
               </TabsContent>
-
-              {/* Global Accuracy Leaderboard Tab */}
-              <TabsContent value="accuracy" className="space-y-6">
-                {isAccuracyLoading ?
-                    <div className="flex items-center justify-center h-64">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-6 h-6 border-2 border-ai-glow/30 border-t-ai-glow rounded-full animate-spin" />
-                        <span className="text-muted-foreground">
-                    Loading accuracy leaderboard... Yep, it takes a while, too many accurate players out there, gotta find the best.
-                  </span>
-                      </div>
-                    </div>
-                  :
-                  <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Trophy className="w-6 h-6 text-human-glow" />
-                        <span>Top 10 Global Players by Accuracy</span>
-                      </CardTitle>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4" />
-                          <span>
-                          {globalAccuracyLeaderboard.totalPlayers.toLocaleString()}{" "}
-                            total players
-                        </span>
-                        </div>
-                        <span>
-                        Updated{" "}
-                          {new Date(
-                            globalAccuracyLeaderboard.lastUpdated,
-                          ).toLocaleTimeString()}
-                      </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {globalAccuracyLeaderboard.entries.map((entry) => (
-                          <div
-                            key={entry.userId}
-                            className={cn(
-                              "flex items-center space-x-4 p-4 rounded-lg transition-all duration-300",
-                              entry.isCurrentUser
-                                ? "bg-ai-glow/10 border border-ai-glow/30 shadow-lg shadow-ai-glow/10"
-                                : "bg-muted/20 hover:bg-muted/40",
-                              entry.rank <= 3 && "ring-1 ring-human-glow/20",
-                            )}
-                          >
-                            <div className="w-12 flex justify-center">
-                              {getRankIcon(entry.rank)}
-                            </div>
-                            <Avatar
-                              className={cn(
-                                "w-12 h-12",
-                                entry.rank <= 3 && "ring-2 ring-human-glow/50",
-                              )}
-                            >
-                              <AvatarImage src={entry.avatar} />
-                              <AvatarFallback>{entry.username[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                              <span
-                                className={cn(
-                                  "font-semibold text-lg",
-                                  entry.rank === 1 && "text-yellow-400",
-                                  entry.rank === 2 && "text-gray-400",
-                                  entry.rank === 3 && "text-amber-600",
-                                )}
-                              >
-                                {entry.username}
-                              </span>
-                                {entry.isCurrentUser && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs border-ai-glow/50 text-ai-glow"
-                                  >
-                                    You
-                                  </Badge>
-                                )}
-                                {entry.rank <= 3 && (
-                                  <Badge className="text-xs bg-human-glow/20 text-human-glow border-human-glow/30">
-                                    Top 3
-                                  </Badge>
-                                )}
-                              </div>
-                              {/*<div className="text-sm text-muted-foreground">*/}
-                              {/*  {entry.gamesPlayed} games played*/}
-                              {/*</div>*/}
-                            </div>
-                            <div className="text-right">
-                              <div className="text-2xl font-bold">
-                                {entry.accuracy.toLocaleString()}
-                              </div>
-                              {/*<div className="text-sm text-muted-foreground">*/}
-                              {/*  {entry.accuracy.toFixed(1)}% accuracy*/}
-                              {/*</div>*/}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>}
-                  </TabsContent>
 
               {/* Personal Statistics Tab */}
               <TabsContent value="personal" className="space-y-6">

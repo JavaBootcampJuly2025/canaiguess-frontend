@@ -114,19 +114,18 @@ export const fetchGameResults = async (gameId: string, token: string):
 Promise<GameResult> => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // console.log("Fetching game results for:", gameId);
-  const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/results`, {
-    method: "POST",
+  const response = await fetch(`${API_BASE_URL}/api/game/${gameId}`, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
-
   if (!response.ok) {
     throw new Error(await response.text());
   }
   const text = await response.text();
   const data = JSON.parse(text);
-
+  console.log(data);
   return data;
 };
 

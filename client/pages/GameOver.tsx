@@ -162,7 +162,7 @@ export default function GameOver({ }) {
               </div>
               <div className="p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
                 <div className="text-2xl font-bold text-human-glow">
-                  {result ? ((result.correct / (result.correct + result.incorrect)) * 100)
+                  {result ? (result.accuracy)
                     .toFixed(1) + "%" : "Loading..."}
                 </div>
                 <div className="text-sm text-muted-foreground">Accuracy</div>
