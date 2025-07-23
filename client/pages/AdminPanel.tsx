@@ -60,7 +60,9 @@ import {
   Database,
   Flag,
   Upload,
+  X,
   RefreshCw,
+  Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -84,6 +86,10 @@ export default function Admin() {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imageLabels, setImageLabels] = useState<{ [key: string]: boolean }>({});
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Mock data generation for development
   const generateMockUsers = (): AdminUserDTO[] => {
@@ -278,36 +284,139 @@ export default function Admin() {
     }
   };
 
-  // const handleResolveReport = async (reportId: number) => {
-  //   setIsUpdating(true);
-  //   try {
-  //     // In production: await adminAPI.resolveReport(reportId);
-  //     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-  //
-  //     setReports(prev => prev.map(report =>
-  //       report.id === reportId ? { ...report, resolved: true } : report
-  //     ));
-  //   } catch (error) {
-  //     console.error('Failed to resolve report:', error);
-  //   } finally {
-  //     setIsUpdating(false);
-  //   }
-  // };
-
   const handleImageUpload = async (files: FileList) => {
     if (!files.length) return;
 
     setIsUploadingImage(true);
+
     try {
-      // In production: implement actual image upload
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate upload delay
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+      const token = localStorage.getItem("token");
+
+      const formData = new FormData();
+      formData.append("file", files[0]); // Or loop if you support multiple
+      formData.append("fake", "true");   // Or false — adjust as needed
+
+      const response = await fetch(`${API_BASE_URL}/api/image/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type manually for FormData
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed with status ${response.status}`);
+      }
 
       alert(`Successfully uploaded ${files.length} image(s) to the game pool.`);
     } catch (error) {
-      console.error('Failed to upload images:', error);
-      alert('Failed to upload images. Please try again.');
+      console.error("Failed to upload images:", error);
+      alert("Failed to upload images. Please try again.");
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+
+  const removeFile = (fileName: string) => {
+    setSelectedFiles(prev => prev.filter(file => file.name !== fileName));
+    setImageLabels(prev => {
+      const newLabels = { ...prev };
+      delete newLabels[fileName];
+      return newLabels;
+    });
+  };
+
+  const toggleImageLabel = (fileName: string) => {
+    setImageLabels(prev => ({
+      ...prev,
+      [fileName]: !prev[fileName]
+    }));
+  };
+
+  const handleFileSelection = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(file =>
+      file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024 // 5MB limit
+    );
+
+    if (validFiles.length !== fileArray.length) {
+      alert('Some files were rejected. Only images under 5MB are allowed.');
+    }
+
+    setSelectedFiles(prev => [...prev, ...validFiles]);
+
+    // Initialize labels for new files (default to false = real/human)
+    const newLabels: { [key: string]: boolean } = {};
+    validFiles.forEach(file => {
+      newLabels[file.name] = false; // false = real/human, true = AI/fake
+    });
+    setImageLabels(prev => ({ ...prev, ...newLabels }));
+  };
+
+  const handleImageSubmit = async () => {
+    if (selectedFiles.length === 0) return;
+
+    setIsUploadingImage(true);
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+      const token = localStorage.getItem("token");
+
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        // The label: true = AI/Fake, false = Real
+        const isFake = imageLabels[file.name] === true;
+        formData.append("fake", isFake.toString());
+
+        const response = await fetch(`${API_BASE_URL}/api/image/upload`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Don't set Content-Type manually for FormData
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed for ${file.name} with status ${response.status}`);
+        }
+      }
+
+      alert(`Successfully uploaded ${selectedFiles.length} image(s) to the game pool.`);
+      // Optionally clear selected files after upload
+      setSelectedFiles([]);
+      setImageLabels({});
+    } catch (error) {
+      console.error("Failed to upload images:", error);
+      alert("Failed to upload images. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+
+  // Drag and drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelection(files);
     }
   };
 
@@ -659,7 +768,18 @@ export default function Admin() {
                         </p>
                       </div>
 
-                      <div className="border-2 border-dashed border-border rounded-lg p-8">
+                      {/* File Drop Zone */}
+                      <div
+                        className={cn(
+                          "border-2 border-dashed rounded-lg p-8 transition-colors",
+                          isDragOver
+                            ? "border-blue-500 bg-blue-500/10"
+                            : "border-border hover:border-blue-500/50"
+                        )}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
                         <div className="text-center">
                           <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                           <div className="space-y-2">
@@ -677,63 +797,102 @@ export default function Admin() {
                               className="hidden"
                               onChange={(e) => {
                                 if (e.target.files) {
-                                  handleImageUpload(e.target.files);
+                                  handleFileSelection(e.target.files);
                                 }
                               }}
                             />
                             <Button
                               onClick={() => document.getElementById('image-upload')?.click()}
-                              disabled={isUploadingImage}
                               className="bg-blue-600 hover:bg-blue-700"
                             >
-                              {isUploadingImage ? (
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                  <span>Uploading...</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center space-x-2">
-                                  <Upload className="w-4 h-4" />
-                                  <span>Select Images</span>
-                                </div>
-                              )}
+                              <Upload className="w-4 h-4 mr-2" />
+                              Select Images
                             </Button>
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Selected Files */}
+                      {selectedFiles.length > 0 && (
                         <Card className="border-border/50">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-base">AI Generated Images</CardTitle>
+                          <CardHeader>
+                            <CardTitle className="text-base">Selected Images ({selectedFiles.length})</CardTitle>
                           </CardHeader>
-                          <CardContent className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              Upload images that are AI-generated for the detection challenge.
-                            </p>
-                            <div className="flex items-center space-x-2 text-sm">
-                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                              <span>Images will be automatically tagged as AI-generated</span>
+                          <CardContent>
+                            <div className="space-y-3">
+                              {selectedFiles.map((file) => (
+                                <div key={file.name} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-12 h-12 bg-muted rounded border flex items-center justify-center">
+                                      <Image className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                      <div className="font-medium text-sm">{file.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center space-x-2">
+                                      <Button
+                                        variant={imageLabels[file.name] ? "outline" : "default"}
+                                        size="sm"
+                                        onClick={() => toggleImageLabel(file.name)}
+                                        className={cn(
+                                          !imageLabels[file.name] && "bg-blue-600 hover:bg-blue-700 text-white"
+                                        )}
+                                      >
+                                        Real
+                                      </Button>
+                                      <Button
+                                        variant={imageLabels[file.name] ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => toggleImageLabel(file.name)}
+                                        className={cn(
+                                          imageLabels[file.name] && "bg-red-600 hover:bg-red-700 text-white"
+                                        )}
+                                      >
+                                        AI/Fake
+                                      </Button>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeFile(file.name)}
+                                      className="text-red-600 hover:bg-red-500/10"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+
+                              <div className="flex justify-end pt-4 border-t">
+                                <Button
+                                  onClick={handleImageSubmit}
+                                  disabled={isUploadingImage || selectedFiles.length === 0}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  {isUploadingImage ? (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                      <span>Uploading...</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center space-x-2">
+                                      <Upload className="w-4 h-4" />
+                                      <span>Upload {selectedFiles.length} Image{selectedFiles.length !== 1 ? 's' : ''}</span>
+                                    </div>
+                                  )}
+                                </Button>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
+                      )}
 
-                        <Card className="border-border/50">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Human Created Images</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              Upload authentic human-created images for the detection challenge.
-                            </p>
-                            <div className="flex items-center space-x-2 text-sm">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span>Images will be automatically tagged as human-created</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
+                      {/* Upload Guidelines */}
                       <Card className="border-border/50">
                         <CardHeader>
                           <CardTitle className="text-base flex items-center space-x-2">
@@ -745,19 +904,15 @@ export default function Admin() {
                           <div className="space-y-2 text-sm">
                             <div className="flex items-start space-x-2">
                               <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                              <span>Mark each image as "Real" (human-created) or "AI/Fake" (AI-generated)</span>
+                            </div>
+                            <div className="flex items-start space-x-2">
+                              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                               <span>Ensure images are clear and high quality</span>
                             </div>
                             <div className="flex items-start space-x-2">
                               <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                               <span>Avoid images with watermarks or obvious signatures</span>
-                            </div>
-                            <div className="flex items-start space-x-2">
-                              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span>Include diverse subjects and styles for better game balance</span>
-                            </div>
-                            <div className="flex items-start space-x-2">
-                              <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                              <span>Images will be automatically resized and optimized for the game</span>
                             </div>
                           </div>
                         </CardContent>
