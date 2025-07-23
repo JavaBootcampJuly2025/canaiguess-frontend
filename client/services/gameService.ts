@@ -5,7 +5,7 @@ import { ImageBatchResponseDTO, ImageDTO } from "@/dto/ImageBatchResponseDTO";
 
 // API call to fetch game data
 export const fetchGameData = async (gameId: string, token: string | null) => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -35,7 +35,7 @@ export const fetchBatchImagesFromApi = async (
   gameId: string,
   token: string
 ): Promise<ImageDTO[]> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -65,7 +65,7 @@ export const createNewGame = async (
   difficulty: number,
   token: string | null
 ): Promise<NewGameResponseDTO> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -94,7 +94,7 @@ export const submitGuessesRequest = async (
   guesses: boolean[],
   token: string | null
 ): Promise<{ correct: boolean[] }> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -120,7 +120,7 @@ export const submitGuessesRequest = async (
 // API call to retrieve 10 last games
 export const fetchLastGames = async (token: string):
   Promise<GameDTO[]> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   const username = localStorage.getItem("username");
   console.log("Fetching last 10 games for this user");
 
@@ -143,7 +143,7 @@ export const fetchLastGames = async (token: string):
 // API call to retrieve hints
 export const fetchImageHint = async (token: string, imageId: string):
   Promise<HintResponseDTO> => {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   console.log("Analyzing...");
 
   const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/hint`, {

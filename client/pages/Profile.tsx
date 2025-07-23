@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { RecentGame } from "@/types/Leaderboards";
 import {
   Dialog,
   DialogContent,
@@ -29,21 +30,17 @@ import {
   Settings,
   Camera,
   Save,
-  Edit,
   Eye,
   EyeOff,
   BarChart3,
   Trophy,
   Target,
-  Calendar,
-  Globe,
-  Bell,
-  Smartphone,
-  Monitor,
-  MapPin,
   Link as LinkIcon,
   Check,
-  X,
+  Clock,
+  Grid3X3,
+  Image,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -52,6 +49,7 @@ import {
   SecuritySettings,
 } from "@/types/Profile";
 import { UserStats } from "@/types/Stats";
+import { fetchGameData, fetchLastGames } from "@/services/gameService";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -59,6 +57,16 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+
+  const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
+  const [isPersonalLoading, setIsPersonalLoading] = useState(true);
+  
+  const [personalLoaded, setPersonalLoaded] = useState(false);
+  const personalPromise = useRef<Promise<void> | null>(null);
+
+  const [currentTab, setCurrentTab] = useState("score");
+  
+  
   const [securitySettings, setSecuritySettings] =
     useState<SecuritySettings | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -68,6 +76,54 @@ export default function Profile() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const loadPersonal = () => {
+    personalPromise.current = retrieveRecentGames().then((games) => {
+      setRecentGames(games);
+      setIsPersonalLoading(false);
+      setPersonalLoaded(true);
+    });
+    return personalPromise.current;
+  };
+
+  const retrieveRecentGames = async (): Promise<RecentGame[]> => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No auth token found");
+
+    // Fetch last games list
+    const lastGames  = await fetchLastGames(token); // returns [{ gameId, pointsEarned }, ...]
+
+    // Fetch gameData and gameResult in parallel for each game
+    const enrichedGamesPromises = lastGames.map(async (game) => {
+      const gameData = await fetchGameData(game.id.toString(), token);
+
+      let gameMode: "single" | "pair" | "group" = "group";
+      if (gameData.batchSize === 1) gameMode = "single";
+      else if (gameData.batchSize === 2) gameMode = "pair";
+
+      const totalImages = gameData.batchSize * gameData.batchCount;
+
+      return {
+        id: `game-${game.id}`,
+        score: game.score,
+        gameMode,
+        accuracy: gameData.accuracy,
+        totalImages,
+        correctGuesses: gameData.correct,
+        difficulty: gameData.difficulty,
+        gameId: game.id,  // keep numeric ID for sorting
+      };
+    });
+
+    // Wait for all promises to resolve
+    const enrichedGames = await Promise.all(enrichedGamesPromises);
+
+    // Sort by numeric gameId descending (latest first)
+    // enrichedGames.sort((a, b) => b.id - a.id);
+
+    // Remove the temporary gameId field if you want
+    return enrichedGames.map(({ gameId, ...rest }) => rest);
+  };
 
   // Mock data generation
   const generateMockProfile = (): UserProfile => ({
@@ -195,6 +251,11 @@ export default function Profile() {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    // Always start background load right away:
+    loadPersonal();
+  }, []);
+
   const handleSaveProfile = async () => {
     if (!profile) return;
 
@@ -223,6 +284,40 @@ export default function Profile() {
   const handleUpdatePreference = (key: keyof UserProfile, value: any) => {
     if (!profile) return;
     setProfile({ ...profile, [key]: value });
+  };
+
+  const handleTabChange = (tab: string) => {
+    setCurrentTab(tab);
+
+    if (tab === "personal" && !personalLoaded) {
+      setIsPersonalLoading(true);
+      loadPersonal(); // uses the single ref + sets flags
+    }
+  };
+
+  const getGameModeIcon = (mode: string) => {
+    switch (mode) {
+      case "single":
+        return <Image className="w-4 h-4 text-ai-glow" />;
+      case "pair":
+        return <Images className="w-4 h-4 text-human-glow" />;
+      case "group":
+        return <Grid3X3 className="w-4 h-4 text-neural-purple" />;
+      default:
+        return <Target className="w-4 h-4" />;
+    }
+  };
+
+  const getDifficultyColor = (difficulty: number) => {
+    if (difficulty < 30) {
+      return "text-green-400 bg-green-400/10";
+    } else if (difficulty < 60) {
+      return "text-blue-400 bg-blue-400/10";
+    } else if (difficulty < 80) {
+      return "text-purple-400 bg-purple-400/10";
+    } else {
+      return "text-red-400 bg-red-400/10";
+    }
   };
 
   if (isLoading || !profile || !userStats) {
@@ -328,7 +423,7 @@ export default function Profile() {
                     className="border-human-glow/30 hover:bg-human-glow/10"
                   >
                     <Trophy className="w-4 h-4 mr-2" />
-                    View Full Stats
+                    View Global Leaderboard
                   </Button>
                 </CardTitle>
               </CardHeader>
@@ -370,79 +465,18 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            {/* Profile Settings Tabs */}
-            <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="general">
-                  <Edit className="w-4 h-4 mr-2" />
-                  General
-                </TabsTrigger>
+            {/* Profile Tabs */}
+            <Tabs defaultValue="account" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="account">
                   <Settings className="w-4 h-4 mr-2" />
                   Account
                 </TabsTrigger>
-                <TabsTrigger value="security">
+                <TabsTrigger value="lastGames">
                   <Shield className="w-4 h-4 mr-2" />
-                  Security
-                </TabsTrigger>
-                <TabsTrigger value="preferences">
-                  <Bell className="w-4 h-4 mr-2" />
-                  Preferences
+                  Last Games
                 </TabsTrigger>
               </TabsList>
-
-              {/* General Tab */}
-              <TabsContent value="general" className="space-y-6">
-                <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-                  <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
-                      <Input
-                        id="username"
-                        value={profile.username}
-                        onChange={(e) =>
-                          setProfile({ ...profile, username: e.target.value })
-                        }
-                        className="bg-background/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea
-                        id="bio"
-                        value={profile.bio || ""}
-                        onChange={(e) =>
-                          setProfile({ ...profile, bio: e.target.value })
-                        }
-                        className="bg-background/50 min-h-20"
-                        placeholder="Tell us about yourself..."
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleSaveProfile}
-                      disabled={isSaving}
-                      className="bg-gradient-to-r from-ai-glow to-electric-blue hover:from-ai-glow/90 hover:to-electric-blue/90"
-                    >
-                      {isSaving ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span>Saving...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <Save className="w-4 h-4" />
-                          <span>Save Changes</span>
-                        </div>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
 
               {/* Account Tab */}
               <TabsContent value="account" className="space-y-6">
@@ -452,6 +486,22 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
+                        <div className="flex space-x-2">
+                          <Input
+                            id="username"
+                            value={profile.username}
+                            onChange={(e) =>
+                              setProfile({ ...profile, username: e.target.value })
+                            }
+                            className="bg-background/50"
+                          />
+                              <Button variant="outline">
+                                Change
+                              </Button>
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">Email Address</Label>
                         <div className="flex space-x-2">
@@ -614,181 +664,76 @@ export default function Profile() {
                 </Card>
               </TabsContent>
 
-              {/* Security Tab */}
-              <TabsContent value="security" className="space-y-6">
-                <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-                  <CardHeader>
-                    <CardTitle>Security Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold">
-                          Two-Factor Authentication
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Add an extra layer of security to your account
-                        </p>
-                      </div>
-                      <Switch
-                        checked={securitySettings?.twoFactorEnabled || false}
-                        onCheckedChange={(checked) =>
-                          setSecuritySettings((prev) =>
-                            prev
-                              ? { ...prev, twoFactorEnabled: checked }
-                              : null,
-                          )
-                        }
-                      />
+
+              {/* Personal Statistics Tab */}
+              <TabsContent value="lastGames" className="space-y-6">
+                {/* User Stats Overview */}
+                {isPersonalLoading  ?
+                  <div className="flex items-center justify-center h-64">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 border-2 border-ai-glow/30 border-t-ai-glow rounded-full animate-spin" />
+                      <span className="text-muted-foreground">
+                    Loading your statistics...
+                  </span>
                     </div>
+                  </div>
+                  :
+                  <div>
 
-                    <Separator />
+                    {/* Mode Performance and Recent Games */}
+                    <div className="grid lg:grid-cols-1 gap-6">
+                      {/* Recent Games History */}
+                      <Card className="border-border/50 backdrop-blur-sm bg-card/80">
+                        <CardHeader>
+                          <CardTitle className="flex items-center space-x-2">
+                            <Clock className="w-5 h-5 text-human-glow" />
+                            <span>Recent Games</span>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3 max-h-80 overflow-y-auto">
+                            {recentGames.map((game) => (
+                              <div
+                                key={game.id}
+                                className="flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="flex-shrink-0">
+                                    {getGameModeIcon(game.gameMode)}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center space-x-2">
+                                  <span className="font-medium capitalize">
+                                    {game.gameMode}
+                                  </span>
+                                      <Badge className={cn("text-xs capitalize", getDifficultyColor(game.difficulty))}>
+                                        {game.difficulty + "%"}
+                                      </Badge>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {game.correctGuesses}/{game.totalImages}{" "}
+                                      images
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold">
+                                    {game.score ?? "Not finished"}
+                                  </div>
+                                  {game.score != null && (
+                                    <div className="text-xs text-muted-foreground">
+                                      {game.accuracy.toFixed(1)}%
+                                    </div>
+                                  )}
 
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Active Sessions</h3>
-                      {securitySettings?.activeSessions.map((session) => (
-                        <div
-                          key={session.id}
-                          className="flex items-center justify-between p-4 rounded-lg bg-muted/20"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <Monitor className="w-5 h-5 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium flex items-center space-x-2">
-                                <span>{session.deviceName}</span>
-                                {session.isCurrent && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Current
-                                  </Badge>
-                                )}
+                                </div>
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                {session.location} • Last active:{" "}
-                                {new Date(session.lastActive).toLocaleString()}
-                              </div>
-                            </div>
+                            ))}
                           </div>
-                          {!session.isCurrent && (
-                            <Button variant="outline" size="sm">
-                              <X className="w-4 h-4 mr-2" />
-                              Revoke
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Preferences Tab */}
-              <TabsContent value="preferences" className="space-y-6">
-                <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-                  <CardHeader>
-                    <CardTitle>Privacy & Notifications</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">Privacy Settings</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">Private Profile</div>
-                            <div className="text-sm text-muted-foreground">
-                              Make your profile visible only to friends
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile.isPrivateProfile}
-                            onCheckedChange={(checked) =>
-                              handleUpdatePreference(
-                                "isPrivateProfile",
-                                checked,
-                              )
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">
-                              Show Online Status
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              Let others see when you're online
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile.showOnlineStatus}
-                            onCheckedChange={(checked) =>
-                              handleUpdatePreference(
-                                "showOnlineStatus",
-                                checked,
-                              )
-                            }
-                          />
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <h3 className="font-semibold">Notification Settings</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">
-                              Email Notifications
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              Receive updates via email
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile.emailNotifications}
-                            onCheckedChange={(checked) =>
-                              handleUpdatePreference(
-                                "emailNotifications",
-                                checked,
-                              )
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">
-                              Game Result Notifications
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              Get notified about game results and achievements
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile.gameResultNotifications}
-                            onCheckedChange={(checked) =>
-                              handleUpdatePreference(
-                                "gameResultNotifications",
-                                checked,
-                              )
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">Weekly Reports</div>
-                            <div className="text-sm text-muted-foreground">
-                              Receive weekly performance summaries
-                            </div>
-                          </div>
-                          <Switch
-                            checked={profile.weeklyReports}
-                            onCheckedChange={(checked) =>
-                              handleUpdatePreference("weeklyReports", checked)
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>}
               </TabsContent>
             </Tabs>
           </div>

@@ -46,7 +46,7 @@ export default function GameOver({ }) {
 
   useEffect(() => {
     const fetchGame = async () => {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/api/game/${gameId}`, {
         headers: {

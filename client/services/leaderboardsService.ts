@@ -1,7 +1,7 @@
 // API call to fetch the global leaderboard
 export const fetchGlobalLeaderboard = async () => {
   const token = localStorage.getItem("token");
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   // console.log("fetching score leaderboard");
   const response = await fetch(`${API_BASE_URL}/api/leaderboard`, {
     method: "GET",

@@ -10,7 +10,7 @@ import { Bot, Brain, Eye, EyeOff, Sparkles, User, Zap, UserCheck, Shield, Check,
 import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
