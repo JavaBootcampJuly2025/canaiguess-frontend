@@ -26,6 +26,7 @@ import {
   Trophy,
   User,
   Zap,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
@@ -178,10 +179,21 @@ export default function MainMenu() {
               <User className="w-4 h-4" />
               <span>{username}</span>
             </div>
+            {localStorage.getItem("role") === 'admin' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin")}
+                className="border-red-500/30 text-red-600 hover:bg-red-500/10 hover:border-red-500/50"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            )}
             {localStorage.getItem("isGuest") == "false" && (<Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate(`/profile/${username}`)}
                 className="border-border/50"
               >
                 <User className="w-4 h-4 mr-2" />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,35 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { RecentGame } from "@/types/Leaderboards";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Brain,
-  Sparkles,
-  ArrowLeft,
-  User,
-  Mail,
-  Lock,
-  Shield,
-  Settings,
-  Camera,
-  Eye,
-  EyeOff,
-  BarChart3,
-  Trophy,
-  Target,
-  Link as LinkIcon,
-  Check,
-  Clock,
-  Grid3X3,
-  Image,
-  Images,
+import { Brain, Sparkles, ArrowLeft, User, Mail, Lock, Shield, Settings,
+  Camera, Eye, EyeOff, BarChart3, Trophy, Target, Link as LinkIcon, Check, Clock,
+  Grid3X3, Image, Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -54,6 +30,8 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserDTO | null>(null);
+
+  const { username } = useParams<{ username: string }>();
 
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [isPersonalLoading, setIsPersonalLoading] = useState(true);
@@ -85,7 +63,7 @@ export default function Profile() {
     if (!token) throw new Error("No auth token found");
 
     // Fetch last games list
-    const lastGames  = await fetchLastGames(token);
+    const lastGames  = await fetchLastGames(token, username);
 
     // Fetch gameData and gameResult in parallel for each game
     const enrichedGamesPromises = lastGames.map(async (game) => {
@@ -123,30 +101,13 @@ export default function Profile() {
   const generateMockProfile = (): UserProfile => ({
     userId: "current-user",
     username: "Neural Detective",
-    email: "neural.detective@example.com",
     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=neural-detective`,
-    firstName: "Alex",
-    lastName: "Neural",
-    bio: "AI enthusiast and neural network detective. Passionate about distinguishing between human creativity and artificial intelligence.",
-    location: "San Francisco, CA",
-    website: "https://neuraldetective.com",
     isEmailVerified: true,
-    isPrivateProfile: false,
-    allowFriendRequests: true,
-    showOnlineStatus: true,
-    emailNotifications: true,
-    pushNotifications: false,
-    gameResultNotifications: true,
-    weeklyReports: true,
-    createdAt: "2024-01-15T00:00:00Z",
-    lastLoginAt: new Date().toISOString(),
-    timezone: "America/Los_Angeles",
-    language: "en",
+    // createdAt: "2024-01-15T00:00:00Z",
   });
 
   const getUserStats = async (): Promise<UserDTO> => {
     const token = localStorage.getItem("token");
-    const username = localStorage.getItem("username");
     const userStats  = await fetchUserStats(token, username);
     return userStats;
   };
@@ -155,18 +116,16 @@ export default function Profile() {
     const loadProfile = async () => {
       setIsLoading(true);
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const mockProfile = generateMockProfile();
       const userStats = await getUserStats();
       setProfile(mockProfile);
       setUserStats(userStats);
+
       setIsLoading(false);
     };
 
     loadProfile();
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     // Always start background load right away:
@@ -175,10 +134,7 @@ export default function Profile() {
 
   const handleSaveProfile = async () => {
     if (!profile) return;
-
     setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
   };
 
@@ -314,8 +270,7 @@ export default function Profile() {
                 </Button>
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{localStorage.getItem("username")}</h1>
-                <p className="text-muted-foreground">{profile.email}</p>
+                <h1 className="text-3xl font-bold">{username}</h1>
                 {profile.isEmailVerified && (
                   <Badge className="mt-2 bg-human-glow/20 text-human-glow border-human-glow/30">
                     <Check className="w-3 h-3 mr-1" />
@@ -336,7 +291,7 @@ export default function Profile() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate("/leaderboards?tab=personal")}
+                    onClick={() => navigate("/leaderboards")}
                     className="border-human-glow/30 hover:bg-human-glow/10"
                   >
                     <Trophy className="w-4 h-4 mr-2" />
@@ -408,7 +363,7 @@ export default function Profile() {
                         <div className="flex space-x-2">
                           <Input
                             id="username"
-                            value={localStorage.getItem("username")}
+                            value={username}
                             onChange={(e) =>
                               setProfile({ ...profile, username: e.target.value })
                             }
@@ -425,7 +380,7 @@ export default function Profile() {
                           <Input
                             id="email"
                             type="email"
-                            value={profile.email}
+                            value=""
                             disabled
                             className="bg-background/50 flex-1"
                           />

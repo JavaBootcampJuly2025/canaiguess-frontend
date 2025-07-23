@@ -6,7 +6,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import {PrivateRoute, GuestOrUserRoute, PublicRoute} from "@/components/RouteGuards";
+import {PrivateRoute, GuestOrUserRoute, PublicRoute, AdminRoute} from "@/components/RouteGuards";
 import Auth from "./pages/Auth";
 import MainMenu from "./pages/MainMenu";
 import GamePage from "./pages/GamePage";
@@ -14,6 +14,7 @@ import NotFound from "./pages/404";
 import GameOver from "./pages/GameOver";
 import Leaderboards from "./pages/Leaderboards";
 import Profile from "./pages/Profile";
+import AdminPanel from "./pages/AdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -54,10 +55,17 @@ const App = () => (
               <Leaderboards />
             </PrivateRoute>
           } />
-          <Route path="/profile" element={
+          <Route path="/profile/:username" element={
             <PrivateRoute>
               <Profile />
             </PrivateRoute>
+          } />
+          
+          {/*Admins only*/}
+          <Route path="/admin" element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
           } />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -19,3 +19,10 @@ export function PrivateRoute({ children }: { children: JSX.Element }) {
   if (!token) return <Navigate to="/menu" replace />;
   return children;
 }
+
+// Only admin users allowed
+export function AdminRoute({ children }: { children: JSX.Element }) {
+  const role = localStorage.getItem("role");
+  if (role!="admin") return <Navigate to="/menu" replace />;
+  return children;
+}

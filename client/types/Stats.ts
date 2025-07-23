@@ -25,7 +25,6 @@ export interface UserStats {
 
   // Rankings
   globalRank: number;
-  skillTier: SkillTier;
 
   // Recent activity
   lastPlayedAt: string;
@@ -49,7 +48,6 @@ export interface LeaderboardEntry {
   score: number;
   accuracy: number;
   gamesPlayed: number;
-  skillTier: SkillTier;
   rank: number;
   isCurrentUser?: boolean;
 }
@@ -71,13 +69,13 @@ export type LeaderboardType =
   | "expert"
   | "master";
 
-export type SkillTier =
-  | "beginner" // 0-20%
-  | "novice" // 21-40%
-  | "intermediate" // 41-60%
-  | "advanced" // 61-80%
-  | "expert" // 81-95%
-  | "master"; // 96-100%
+// export type SkillTier =
+//   | "beginner" // 0-20%
+//   | "novice" // 21-40%
+//   | "intermediate" // 41-60%
+//   | "advanced" // 61-80%
+//   | "expert" // 81-95%
+//   | "master"; // 96-100%
 
 // export interface Achievement {
 //   id: string;
@@ -106,7 +104,6 @@ export interface StatsResponse {
   userStats: UserStats;
   globalLeaderboard: Leaderboard;
   weeklyLeaderboard: Leaderboard;
-  skillTierLeaderboards: Record<SkillTier, Leaderboard>;
   // achievements: Achievement[];
   recentGames: RecentGame[];
 }

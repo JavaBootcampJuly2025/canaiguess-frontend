@@ -57,6 +57,7 @@ export default function LoginPage() {
           localStorage.setItem("username", username);
           localStorage.setItem("isGuest", "false");
           localStorage.setItem("role", role);
+          console.log(role);
           navigate("/menu");
         } else {
           alert("Login succeeded but no token returned.");
