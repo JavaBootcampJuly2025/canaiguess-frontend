@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, } from "react";
 import { createNewGame } from "@/services/gameService";
 import { GamePageParams, GameConfig, GameResult } from "@/types/Game";
-import { fetchGameResults } from "@/services/gameService";
+import { fetchGameData } from "@/services/gameService";
 
 export default function GameOver({ }) {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ export default function GameOver({ }) {
       console.log("Fetching game results for:", gameId);
       const token = localStorage.getItem("token");
       try {
-        const data = await fetchGameResults(gameId!, token!);
+        const data = await fetchGameData(gameId!, token!);
         setResult(data);
       } catch (error) {
         console.error("Error fetching results:", error);

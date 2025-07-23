@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AccuracyLeaderboard, Leaderboard, RecentGame, UserStats } from "@/types/Leaderboards";
 import { fetchGlobalAccuracyLeaderboard, fetchGlobalLeaderboard } from "@/services/leaderboardsService";
-import { fetchGameData, fetchGameResults, fetchLastGames } from "@/services/gameService";
+import { fetchGameData, fetchLastGames } from "@/services/gameService";
 
 export default function Leaderboards() {
   const navigate = useNavigate();
@@ -181,10 +181,7 @@ export default function Leaderboards() {
 
     // Fetch gameData and gameResult in parallel for each game
     const enrichedGamesPromises = lastGames.map(async (game) => {
-      const [gameData, gameResult] = await Promise.all([
-        fetchGameData(game.gameId.toString(), token),
-        fetchGameResults(game.gameId.toString(), token),
-      ]);
+      const gameData = await fetchGameData(game.id.toString(), token);
 
       let gameMode: "single" | "pair" | "group" = "group";
       if (gameData.batchSize === 1) gameMode = "single";
@@ -193,14 +190,14 @@ export default function Leaderboards() {
       const totalImages = gameData.batchSize * gameData.batchCount;
 
       return {
-        id: `game-${game.gameId}`,
-        score: game.pointsEarned,
+        id: `game-${game.id}`,
+        score: game.score,
         gameMode,
-        accuracy: Math.round(gameResult.accuracy * 1000) / 10,
+        accuracy: Math.round(gameData.accuracy * 1000) / 10,
         totalImages,
-        correctGuesses: gameResult.correct,
+        correctGuesses: gameData.correct,
         difficulty: gameData.difficulty,
-        gameId: game.gameId,  // keep numeric ID for sorting
+        gameId: game.id,  // keep numeric ID for sorting
       };
     });
 
@@ -208,7 +205,7 @@ export default function Leaderboards() {
     const enrichedGames = await Promise.all(enrichedGamesPromises);
 
     // Sort by numeric gameId descending (latest first)
-    enrichedGames.sort((a, b) => b.gameId - a.gameId);
+    // enrichedGames.sort((a, b) => b.id - a.id);
 
     // Remove the temporary gameId field if you want
     return enrichedGames.map(({ gameId, ...rest }) => rest);
@@ -350,7 +347,7 @@ export default function Leaderboards() {
                   <span>Score Top</span>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="accuracy"
+                  value="personal"
                   className="flex items-center space-x-2"
                 >
                   <User className="w-4 h-4" />
