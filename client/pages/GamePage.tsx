@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { GameConfig, GameInstance, GamePageParams, Guess } from "@/types/Game";
-import { fetchBatchImagesFromApi, fetchImageHint, submitGuessesRequest, fetchGameData } from "@/services/gameService";
+import { fetchBatchImagesFromApi, fetchGameData, fetchImageHint, submitGuessesRequest } from "@/services/gameService";
 import { ImageDTO } from "@/dto/ImageBatchResponseDTO";
 import { HintResponseDTO } from "@/dto/HintResponseDTO";
 
@@ -65,6 +65,7 @@ export default function Game() {
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportComment, setReportComment] = useState("");
+  const [imageBeingReported, setImageBeingReported] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [submittedReports, setSubmittedReports] = useState<Set<string>>(new Set());
 
@@ -92,9 +93,9 @@ export default function Game() {
     const fetchGame = async () => {
       const token = localStorage.getItem("token");
       const response = await fetchGameData(gameId, token);
-        setGameConfig(response);
-        if (response.currentBatch == 0)
-          response.currentBatch = 1;
+      setGameConfig(response);
+      if (response.currentBatch == 0)
+        response.currentBatch = 1;
     };
 
     fetchGame();
@@ -212,7 +213,7 @@ export default function Game() {
         });
 
         guesses = allGuesses;
-        console.log("Guesses: " + guesses + " - batch: "+ gameConfig.batchSize);
+        console.log("Guesses: " + guesses + " - batch: " + gameConfig.batchSize);
       }
       const result = await submitGuessesRequest(
         gameId,
@@ -347,10 +348,10 @@ export default function Game() {
   };
 
   const submitReport = async () => {
-    if (!selectedHint || !reportReason.trim()) return;
+    if (!imageBeingReported || !reportReason.trim()) return;
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
     try {
-      const imageId = selectedHint.imageId;
+      const imageId = imageBeingReported;
       setIsSubmittingReport(true);
       const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/report`, {
         method: "POST",
@@ -360,6 +361,7 @@ export default function Game() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
+          imageBeingReported,
           description: reportReason,
         }),
       });
@@ -369,14 +371,13 @@ export default function Game() {
       }
 
       console.log("Report submitted:", {
-        hintId: selectedHint.imageId,
         reason: reportReason,
       });
-      setSubmittedReports(prev => new Set(prev).add(selectedHint.imageId));
+      setSubmittedReports(prev => new Set(prev).add(imageBeingReported));
       // Reset form and close
       setShowReportForm(false);
       setReportReason("");
-      setReportComment("");
+      // setReportComment("");
 
       toast({
         title: "Report submitted",
@@ -385,24 +386,39 @@ export default function Game() {
     } catch (err) {
       toast({
         title: "Failed to submit",
-        description: "Please try again later.",
+        description: "Please try again later." + err,
         variant: "destructive",
       });
     } finally {
-      setIsSubmittingReport(false);
+      setImageBeingReported("");
     }
   };
 
   // The hardcoded dropdown list of report reasons
+  // const reportReasons = [
+  //   "Incorrect analysis verdict",
+  //   "Missing important detection indicators",
+  //   "Analysis contradicts obvious visual evidence",
+  //   "Analysis appears to be hallucinating",
+  //   "Technical error or glitch",
+  //   "Inappropriate or offensive content",
+  //   "Other issue not listed above",
+  // ];
+
+  // The hardcoded dropdown list of report reasons
   const reportReasons = [
-    "Incorrect analysis verdict",
-    "Missing important detection indicators",
-    "Analysis contradicts obvious visual evidence",
-    "Analysis appears to be hallucinating",
-    "Technical error or glitch",
     "Inappropriate or offensive content",
+    "Explicit or adult content",
+    "Violence or disturbing imagery",
+    "Hate symbols or hateful content",
+    "Poor image quality",
+    "Spam or irrelevant image",
+    "Copyright infringement",
+    "AI generated marked as Human made",
+    "Human made marked as AI generated",
     "Other issue not listed above",
   ];
+
 
   const getImageGuess = (imageId: string): boolean | null => {
     return game.userGuesses.find((g) => g.imageId === imageId)?.guess ?? null;
@@ -629,6 +645,29 @@ export default function Game() {
                             )}
                           </Button>
                         </div>
+                        <div className="absolute bottom-3 left-3">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              if (!submittedReports.has(image.id)) {
+                                setShowReportForm(true);
+                                setImageBeingReported(image.id);
+                              } else {
+                                toast({
+                                  title: "Already reported",
+                                  description: "You've already submitted a report for this analysis.",
+                                  variant: "destructive",
+                                  className: "bg-destructive/80",
+                                });
+                              }
+                            }}
+                            className="w-8 h-8 px-2 text-xs border-red-500/30 rounded-full text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
+                          >
+                            <Flag className="w-3 h-3" />
+
+                          </Button>
+                        </div>
                         <button title="View full-sized image"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -676,6 +715,125 @@ export default function Game() {
                   );
                 })}
               </div>)}
+
+
+            {/* Report Panel */}
+            {showReportForm && (
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="w-full xl:w-80 xl:max-h-full overflow-y-auto">
+                  <Card className="border-red-500/20 backdrop-blur-sm bg-card/95 h-full">
+                    <CardContent className="p-6 space-y-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Flag className="w-5 h-5 text-red-400" />
+                          <h3 className="text-lg font-bold">Report Image</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Help us improve our service reporting issues with the images
+                        </p>
+                      </div>
+
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          submitReport();
+                        }}
+                        className="space-y-6"
+                      >
+                        {/* Report Reason */}
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold">Reason for Report</label>
+                          <div className="relative">
+                            <select
+                              value={reportReason}
+                              onChange={(e) => setReportReason(e.target.value)}
+                              className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                              required
+                            >
+                              <option value="">Select a reason...</option>
+                              {reportReasons.map((reason, index) => (
+                                <option key={index} value={reason}>
+                                  {reason}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown
+                              className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                          </div>
+                        </div>
+
+                        {/* Additional Comments */}
+                        {/*<div className="space-y-3">*/}
+                        {/*  <label className="text-sm font-semibold">Additional Comments</label>*/}
+                        {/*  <textarea*/}
+                        {/*    value={reportComment}*/}
+                        {/*    onChange={(e) => setReportComment(e.target.value)}*/}
+                        {/*    placeholder="Please provide more details about the issue (optional)..."*/}
+                        {/*    className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"*/}
+                        {/*    rows={4}*/}
+                        {/*  />*/}
+                        {/*</div>*/}
+
+                        {/* Character count */}
+                        {/*<div className="text-xs text-muted-foreground text-right">*/}
+                        {/*  {reportComment.length}/500 characters*/}
+                        {/*</div>*/}
+
+                        {/* Submit Buttons */}
+                        <div className="flex gap-3 pt-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowReportForm(false);
+                              setReportReason("");
+                              setReportComment("");
+                            }}
+                            className="flex-1"
+                            disabled={isSubmittingReport}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            onClick={submitReport}
+                            disabled={!reportReason.trim() || isSubmittingReport}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            {isSubmittingReport ? (
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Submitting...</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <Send className="w-4 h-4" />
+                                <span>Submit Report</span>
+                              </div>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+
+                      {/* Report Info */}
+                      <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs text-yellow-600">
+                            <div className="font-medium mb-1">Report Information</div>
+                            <div className="text-yellow-600/80">
+                              Reports help us improve and fix issues. Your feedback is anonymous and
+                              valuable.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>)}
+
 
             {/* Image Overlay with Hints */}
             {selectedImageForHint && (
@@ -737,26 +895,7 @@ export default function Game() {
                               <div className="flex items-center space-x-2">
                                 <Brain className="w-6 h-6 text-ai-glow" />
                                 <h2 className="text-xl font-bold">AI Analysis</h2>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    if (!submittedReports.has(selectedHint.imageId)) {
-                                      setShowReportForm(true);
-                                    } else {
-                                      toast({
-                                        title: "Already reported",
-                                        description: "You've already submitted a report for this analysis.",
-                                        variant: "destructive",
-                                        className: "bg-destructive/80",
-                                      });
-                                    }
-                                  }}
-                                  className="h-6 px-2 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
-                                >
-                                  <Flag className="w-3 h-3 mr-1" />
-                                  Report
-                                </Button>
+
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 Detailed analysis of authenticity markers and generation signs
@@ -849,123 +988,9 @@ export default function Game() {
                       </CardContent>
                     </Card>
                   </div>
-                  {/* Report Panel */}
-                  {showReportForm && (
-                    <div className="w-full xl:w-80 xl:max-h-full overflow-y-auto">
-                      <Card className="border-red-500/20 backdrop-blur-sm bg-card/95 h-full">
-                        <CardContent className="p-6 space-y-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                              <Flag className="w-5 h-5 text-red-400" />
-                              <h3 className="text-lg font-bold">Report AI Analysis</h3>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Help us improve by reporting issues with this AI analysis
-                            </p>
-                          </div>
-
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              submitReport();
-                            }}
-                            className="space-y-6"
-                          >
-                            {/* Report Reason */}
-                            <div className="space-y-3">
-                              <label className="text-sm font-semibold">Reason for Report</label>
-                              <div className="relative">
-                                <select
-                                  value={reportReason}
-                                  onChange={(e) => setReportReason(e.target.value)}
-                                  className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
-                                  required
-                                >
-                                  <option value="">Select a reason...</option>
-                                  {reportReasons.map((reason, index) => (
-                                    <option key={index} value={reason}>
-                                      {reason}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown
-                                  className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                              </div>
-                            </div>
-
-                            {/* Additional Comments */}
-                            {/*<div className="space-y-3">*/}
-                            {/*  <label className="text-sm font-semibold">Additional Comments</label>*/}
-                            {/*  <textarea*/}
-                            {/*    value={reportComment}*/}
-                            {/*    onChange={(e) => setReportComment(e.target.value)}*/}
-                            {/*    placeholder="Please provide more details about the issue (optional)..."*/}
-                            {/*    className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"*/}
-                            {/*    rows={4}*/}
-                            {/*  />*/}
-                            {/*</div>*/}
-
-                            {/* Character count */}
-                            {/*<div className="text-xs text-muted-foreground text-right">*/}
-                            {/*  {reportComment.length}/500 characters*/}
-                            {/*</div>*/}
-
-                            {/* Submit Buttons */}
-                            <div className="flex gap-3 pt-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  setShowReportForm(false);
-                                  setReportReason("");
-                                  setReportComment("");
-                                }}
-                                className="flex-1"
-                                disabled={isSubmittingReport}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="submit"
-                                onClick={submitReport}
-                                disabled={!reportReason.trim() || isSubmittingReport}
-                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                              >
-                                {isSubmittingReport ? (
-                                  <div className="flex items-center space-x-2">
-                                    <div
-                                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Submitting...</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center space-x-2">
-                                    <Send className="w-4 h-4" />
-                                    <span>Submit Report</span>
-                                  </div>
-                                )}
-                              </Button>
-                            </div>
-                          </form>
-
-                          {/* Report Info */}
-                          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                            <div className="flex items-start space-x-2">
-                              <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                              <div className="text-xs text-yellow-600">
-                                <div className="font-medium mb-1">Report Information</div>
-                                <div className="text-yellow-600/80">
-                                  Reports help us improve AI accuracy and fix issues. Your feedback is anonymous and
-                                  valuable.
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
                 </div>
               </div>
+
             )}
 
             {/* Submit Button */}

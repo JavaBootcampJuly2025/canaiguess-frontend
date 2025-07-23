@@ -221,7 +221,7 @@ export default function Admin() {
       // Update local state
       setReports((prev) =>
         prev.map((r) =>
-          r.id === reportId ? { ...r, resolved: true } : r
+          r.reportId === reportId ? { ...r, resolved: true } : r
         )
       );
       console.log("Resolved!");
