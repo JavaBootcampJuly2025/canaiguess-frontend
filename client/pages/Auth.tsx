@@ -51,7 +51,8 @@ export default function LoginPage() {
         // Login success
         const token = data.token;
         const username = data.username;
-        const role = data.username;
+        const role = data.role;
+        console.log("Role: " + role + " username: " + username);
 
         if (token) {
           localStorage.setItem("token", token);
@@ -115,7 +116,7 @@ export default function LoginPage() {
         console.log("Registration successful!");
         const token = data.token;
         const username = data.username;
-        const role = data.username;
+        const role = data.role;
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("username", username);
