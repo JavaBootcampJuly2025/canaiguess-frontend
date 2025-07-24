@@ -28,8 +28,10 @@ export const promoteUserToAdmin = async (token: string, username: string) => {
       Authorization: `Bearer ${token}`,
     },
   });
-  const text = await response.text();
-  const data = JSON.parse(text);
-
-  return data;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to promote user: ${errorText}`);
+  }
+  
+  return true;
 };

@@ -226,13 +226,15 @@ export default function Admin() {
   };
 
   const handleDeleteUser = async (username: string) => {
+    const token = localStorage.getItem("token");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
     setIsUpdating(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/user/${username}/delete`, {
-        method: "POST",
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
       });
