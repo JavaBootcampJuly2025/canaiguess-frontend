@@ -23,6 +23,7 @@ import {
 import { fetchGameData, fetchLastGames } from "@/services/gameService";
 import { fetchUserStats } from "@/services/UserService";
 import { UserDTO } from "@/dto/UserDTO";
+import { UpdateUserRequestDTO } from "@/dto/UserUpdateRequestDTO";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -189,59 +190,41 @@ export default function Profile() {
     }
   };
 
-
-  const handleUpdatePreference = (key: keyof UserProfile, value: any) => {
-    if (!profile) return;
-    setProfile({ ...profile, [key]: value });
-  };
-
-  const handleTabChange = (tab: string) => {
-    setCurrentTab(tab);
-
-    if (tab === "personal" && !personalLoaded) {
-      setIsPersonalLoading(true);
-      loadPersonal(); // uses the single ref + sets flags
-    }
-  };
-
-  const handleUpdateField = async (field: "username" | "email") => {
+  const handleUpdateField = async (field: "email" | "password") => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
     const token = localStorage.getItem("token");
 
-    const body: any = {};
-    if (field === "username") {
-      body.username = username;
-    } else {
+    const body: UpdateUserRequestDTO = {};
+
+    if (field === "email") {
+      if (!email || email.trim() === "") {
+        alert("Email cannot be empty.");
+        return;
+      }
       body.email = email;
+    } else if (field === "password") {
+      body.currentPassword = passwordForm.currentPassword;
+      body.newPassword = passwordForm.newPassword;
     }
 
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/user/${username}/update`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/user/${username}/update`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
 
       if (!res.ok) throw new Error("Update failed");
 
       alert(`${field} updated successfully.`);
-
-      if (field === "username") {
-        // If you want, you can update the originalUsername here:
-        // setOriginalUsername(username);
-      }
     } catch (err) {
       console.error(err);
       alert(`Failed to update ${field}.`);
     }
   };
-
 
 
   const getGameModeIcon = (mode: string) => {
@@ -395,7 +378,7 @@ export default function Profile() {
                   </div>
                   <div className="text-center p-4 rounded-lg bg-neural-purple/10">
                     <div className="text-2xl font-bold text-neural-purple">
-                      {userStats.accuracy.toFixed(1) * 100}%
+                      {(userStats.accuracy * 100).toFixed(1)}%
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Accuracy
@@ -435,30 +418,17 @@ export default function Profile() {
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="username">Username</Label>
-                        <div className="flex space-x-2">
-                          <Input
-                            id="username"
-                            value={username}
-                            onClick={() => handleUpdateField("username")}
-                            className="bg-background/50"
-                          />
-                              <Button variant="outline">
-                                Change
-                              </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
                         <Label htmlFor="username">Email Address</Label>
                         <div className="flex space-x-2">
                           <Input
                             id="email"
                             type="email"
-                            value=""
-                            onClick={() => handleUpdateField("email")}
+                            onChange={(e) =>
+                              setEmail(e.target.value)}
                             className="bg-background/50"
                           />
-                          <Button variant="outline">
+                          <Button variant="outline"
+                                  onClick={() => handleUpdateField("email")}>
                             Change
                           </Button>
                         </div>
