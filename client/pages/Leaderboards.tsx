@@ -233,9 +233,6 @@ export default function Leaderboards() {
                           <div className="text-sm text-muted-foreground">
                             {(entry.accuracy * 100).toFixed(1)}% accuracy
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {entry.totalGuesses} guesses
-                          </div>
                         </div>
                       </div>
                     ))}

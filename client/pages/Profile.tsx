@@ -6,13 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { RecentGame } from "@/types/Leaderboards";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
-import { Brain, Sparkles, ArrowLeft, User, Mail, Lock, Shield, Settings,
-  Camera, Eye, EyeOff, BarChart3, Trophy, Target, Link as LinkIcon, Check, Clock,
+import { Brain, Sparkles, ArrowLeft, User, Lock, Shield, Settings,
+  Camera, Eye, EyeOff, BarChart3, Trophy, Target, Link as LinkIcon, Clock,
   Grid3X3, Image, Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,8 +42,6 @@ export default function Profile() {
   
   const [personalLoaded, setPersonalLoaded] = useState(false);
   const personalPromise = useRef<Promise<void> | null>(null);
-
-  const [currentTab, setCurrentTab] = useState("score");
 
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -95,18 +90,14 @@ export default function Profile() {
         totalImages,
         correctGuesses: gameData.correct,
         difficulty: gameData.difficulty,
-        gameId: game.id,  // keep numeric ID for sorting
       };
     });
 
     // Wait for all promises to resolve
     const enrichedGames = await Promise.all(enrichedGamesPromises);
 
-    // Sort by numeric gameId descending (latest first)
-    // enrichedGames.sort((a, b) => b.id - a.id);
-
-    // Remove the temporary gameId field if you want
-    return enrichedGames.map(({ gameId, ...rest }) => rest);
+    // Remove the temporary gameId field
+    return enrichedGames;
   };
 
   // Mock data generation
@@ -142,12 +133,6 @@ export default function Profile() {
     // Always start background load right away:
     loadPersonal();
   }, []);
-
-  const handleSaveProfile = async () => {
-    if (!profile) return;
-    setIsSaving(true);
-    setIsSaving(false);
-  };
 
   const handleDeleteUser = async (username: string) => {
     const token = localStorage.getItem("token");
@@ -349,27 +334,9 @@ export default function Profile() {
             {/* Profile Header */}
             <div className="text-center space-y-6">
               <div className="relative inline-block">
-                <Avatar className="w-24 h-24 border-4 border-ai-glow/20">
-                  <AvatarImage src={profile.avatar} />
-                  <AvatarFallback className="text-2xl">
-                    {profile.username[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <Button
-                  size="sm"
-                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-ai-glow hover:bg-ai-glow/90"
-                >
-                  <Camera className="w-4 h-4" />
-                </Button>
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{username}</h1>
-                {profile.isEmailVerified && (
-                  <Badge className="mt-2 bg-human-glow/20 text-human-glow border-human-glow/30">
-                    <Check className="w-3 h-3 mr-1" />
-                    Email Verified
-                  </Badge>
-                )}
+                <h1 className="text-3xl font-bold">Welcome to your profile, {username}!</h1>
               </div>
             </div>
 
