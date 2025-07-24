@@ -43,11 +43,15 @@ export default function Profile() {
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [passwordForm, setPasswordForm] = useState<ChangePasswordRequest>({
+  const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [newUsername, setNewUsername] = useState("");
+  const [email, setEmail] = useState("");
+
 
   const loadPersonal = () => {
     personalPromise.current = retrieveRecentGames().then((games) => {
@@ -63,7 +67,7 @@ export default function Profile() {
     if (!token) throw new Error("No auth token found");
 
     // Fetch last games list
-    const lastGames  = await fetchLastGames(token, username);
+    const lastGames  = await fetchLastGames(token);
 
     // Fetch gameData and gameResult in parallel for each game
     const enrichedGamesPromises = lastGames.map(async (game) => {
@@ -139,20 +143,52 @@ export default function Profile() {
   };
 
   const handlePasswordChange = async () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    if (
+      !passwordForm.currentPassword ||
+      !passwordForm.newPassword ||
+      passwordForm.newPassword !== passwordForm.confirmPassword
+    ) {
+      alert("Please check your passwords.");
       return;
     }
 
     setIsSaving(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setIsSaving(false);
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/user/${username}/update`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword,
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Password update failed");
+
+      alert("Password updated successfully.");
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update password.");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
 
   const handleUpdatePreference = (key: keyof UserProfile, value: any) => {
     if (!profile) return;
@@ -167,6 +203,46 @@ export default function Profile() {
       loadPersonal(); // uses the single ref + sets flags
     }
   };
+
+  const handleUpdateField = async (field: "username" | "email") => {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    const token = localStorage.getItem("token");
+
+    const body: any = {};
+    if (field === "username") {
+      body.username = username;
+    } else {
+      body.email = email;
+    }
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/user/${username}/update`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!res.ok) throw new Error("Update failed");
+
+      alert(`${field} updated successfully.`);
+
+      if (field === "username") {
+        // If you want, you can update the originalUsername here:
+        // setOriginalUsername(username);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to update ${field}.`);
+    }
+  };
+
+
 
   const getGameModeIcon = (mode: string) => {
     switch (mode) {
@@ -364,9 +440,7 @@ export default function Profile() {
                           <Input
                             id="username"
                             value={username}
-                            onChange={(e) =>
-                              setProfile({ ...profile, username: e.target.value })
-                            }
+                            onClick={() => handleUpdateField("username")}
                             className="bg-background/50"
                           />
                               <Button variant="outline">
@@ -375,53 +449,18 @@ export default function Profile() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
+                        <Label htmlFor="username">Email Address</Label>
                         <div className="flex space-x-2">
                           <Input
                             id="email"
                             type="email"
                             value=""
-                            disabled
-                            className="bg-background/50 flex-1"
+                            onClick={() => handleUpdateField("email")}
+                            className="bg-background/50"
                           />
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline">
-                                <Mail className="w-4 h-4 mr-2" />
-                                Change
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Change Email Address</DialogTitle>
-                                <DialogDescription>
-                                  Enter your new email address and current
-                                  password.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="newEmail">New Email</Label>
-                                  <Input
-                                    id="newEmail"
-                                    type="email"
-                                    placeholder="new@example.com"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="confirmPassword">
-                                    Current Password
-                                  </Label>
-                                  <Input
-                                    id="confirmPassword"
-                                    type="password"
-                                    placeholder="Enter current password"
-                                  />
-                                </div>
-                                <Button className="w-full">Update Email</Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <Button variant="outline">
+                            Change
+                          </Button>
                         </div>
                       </div>
 

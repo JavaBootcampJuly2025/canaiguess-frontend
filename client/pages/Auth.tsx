@@ -269,7 +269,7 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Welcome Back
+                Welcome
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
                 Test your skills against the latest AI image generation

@@ -145,13 +145,7 @@ export default function Leaderboards() {
                     <span>Top 10 Global Players by Score</span>
                   </CardTitle>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4" />
-                      <span>
-                          {globalLeaderboard.totalPlayers.toLocaleString()}{" "}
-                        total players
-                        </span>
-                    </div>
+                    
                     <span>
                         Updated{" "}
                       {new Date(

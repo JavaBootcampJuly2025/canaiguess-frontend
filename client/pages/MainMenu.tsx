@@ -444,10 +444,10 @@ export default function MainMenu() {
                       <div className="p-2 rounded-lg bg-human-glow/10">
                         <Trophy className="w-6 h-6 text-human-glow" />
                       </div>
-                      <span>Leaderboards & Stats</span>
+                      <span>Global Leaderboard</span>
                     </CardTitle>
                     <CardDescription>
-                      View global rankings and your performance metrics
+                      View global rankings by score
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
