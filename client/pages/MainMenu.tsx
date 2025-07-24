@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   BarChart3,
   Brain,
@@ -163,15 +164,18 @@ export default function MainMenu() {
       <div className="relative z-10 min-h-screen">
         {/* Header */}
         <div className="flex justify-between items-center p-6">
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Brain className="w-8 h-8 text-ai-glow" />
-              <Sparkles className="w-4 h-4 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Brain className="w-8 h-8 text-ai-glow" />
+                <Sparkles className="w-4 h-4 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+              </div>
+              <div
+                className="text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+                CanAIGuess
+              </div>
             </div>
-            <div
-              className="text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
-              CanAIGuess
-            </div>
+            <ThemeToggle />
           </div>
 
           <div className="flex items-center space-x-4">
@@ -184,7 +188,7 @@ export default function MainMenu() {
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/admin")}
-                className="border-red-500/30 text-red-600 hover:bg-red-500/10 hover:border-red-500/50"
+                className="border-red-500/30 text-red-600 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-600"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Admin Panel
@@ -454,7 +458,7 @@ export default function MainMenu() {
                     <Button
                       onClick={() => navigate("/leaderboards")}
                       variant="outline"
-                      className="w-full h-12 border-human-glow/30 hover:bg-human-glow/10 hover:border-human-glow/50 text-base font-semibold"
+                      className="w-full h-12 border-human-glow/30 hover:bg-human-glow/10 hover:border-human-glow/50 hover:text-human-glow text-base font-semibold"
                     >
                       <BarChart3 className="w-5 h-5 mr-2" />
                       View Statistics

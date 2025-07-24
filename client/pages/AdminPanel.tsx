@@ -7,26 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell,
+  TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction,
+  AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Brain, Sparkles, ArrowLeft, Shield, Users, Search, Eye, Trash2, Crown, AlertTriangle, CheckCircle, Filter,
+  Brain, ArrowLeft, Shield, Users, Search, Eye, Trash2, Crown, AlertTriangle, CheckCircle, Filter,
   Flag, Upload, X, RefreshCw, Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -266,7 +257,6 @@ export default function Admin() {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
-            // Don't set Content-Type manually for FormData
           },
           body: formData,
         });
@@ -277,7 +267,6 @@ export default function Admin() {
       }
 
       alert(`Successfully uploaded ${selectedFiles.length} image(s) to the game pool.`);
-      // Optionally clear selected files after upload
       setSelectedFiles([]);
       setImageLabels({});
     } catch (error) {
@@ -287,8 +276,7 @@ export default function Admin() {
       setIsUploadingImage(false);
     }
   };
-
-
+  
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -343,14 +331,13 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Administrative background effects - more rigid/structured */}
+      {/* Administrative background effects */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gray-500/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
-
-      {/* Grid pattern overlay for administrative feel */}
+      
       <div className="absolute inset-0 opacity-[0.02]">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
