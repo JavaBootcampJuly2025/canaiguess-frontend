@@ -58,7 +58,6 @@ export default function Profile() {
     confirmPassword: "",
   });
 
-  const [newUsername, setNewUsername] = useState("");
   const [email, setEmail] = useState("");
 
 
@@ -116,7 +115,6 @@ export default function Profile() {
     username: "Neural Detective",
     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=neural-detective`,
     isEmailVerified: true,
-    // createdAt: "2024-01-15T00:00:00Z",
   });
 
   const getUserStats = async (): Promise<UserDTO> => {

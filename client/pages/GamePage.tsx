@@ -362,7 +362,8 @@ export default function Game() {
         },
         body: JSON.stringify({
           imageBeingReported,
-          description: reportReason,
+          title: reportReason,
+          description: reportComment,
         }),
       });
 
@@ -762,22 +763,20 @@ export default function Game() {
                           </div>
                         </div>
 
-                        {/* Additional Comments */}
-                        {/*<div className="space-y-3">*/}
-                        {/*  <label className="text-sm font-semibold">Additional Comments</label>*/}
-                        {/*  <textarea*/}
-                        {/*    value={reportComment}*/}
-                        {/*    onChange={(e) => setReportComment(e.target.value)}*/}
-                        {/*    placeholder="Please provide more details about the issue (optional)..."*/}
-                        {/*    className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"*/}
-                        {/*    rows={4}*/}
-                        {/*  />*/}
-                        {/*</div>*/}
-
-                        {/* Character count */}
-                        {/*<div className="text-xs text-muted-foreground text-right">*/}
-                        {/*  {reportComment.length}/500 characters*/}
-                        {/*</div>*/}
+                         {/*Additional Comments */}
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold">Description</label>
+                          <textarea
+                            value={reportComment}
+                            onChange={(e) => setReportComment(e.target.value)}
+                            placeholder="Please provide more details about the issue (optional)..."
+                            className="w-full p-3 bg-background border border-border/50 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                            rows={4}
+                          />
+                        </div>
+                        <div className="text-xs text-muted-foreground text-right">
+                          {reportComment.length}/500 characters
+                        </div>
 
                         {/* Submit Buttons */}
                         <div className="flex gap-3 pt-2">

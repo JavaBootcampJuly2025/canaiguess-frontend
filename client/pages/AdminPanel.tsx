@@ -47,6 +47,8 @@ export default function Admin() {
   const [imageLabels, setImageLabels] = useState<{ [key: string]: boolean }>({});
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const [deletedImages, setDeletedImages] = useState([]);
+
   // Mock data generation for development
   const generateMockUsers = (): AdminUserDTO[] => {
     const roles: Array<'user' | 'admin'> = ['user', 'admin'];
@@ -66,6 +68,13 @@ export default function Admin() {
     }));
   };
 
+  const [dataVersion, setDataVersion] = useState(0); // 🆕
+
+  const refreshData = () => {
+    setDataVersion(prev => prev + 1);
+  };
+
+
   // Load data
   useEffect(() => {
     const loadData = async () => {
@@ -73,7 +82,7 @@ export default function Admin() {
       try {
         fetchReports();
         await fetchUsers();
-        console.log(localStorage.getItem("token"));
+        await fetchDeletedImages();
       } catch (error) {
         console.error('Failed to load admin data:', error);
       } finally {
@@ -82,7 +91,7 @@ export default function Admin() {
     };
 
     loadData();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, dataVersion]);
 
   const fetchUsers = async () => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
@@ -175,6 +184,7 @@ export default function Admin() {
       console.error("Error resolving report:", error);
     } finally {
       setIsUpdating(false);
+      refreshData();
     }
   };
 
@@ -184,7 +194,7 @@ export default function Admin() {
     setIsUpdating(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/delete`, {
-        method: "DELETE",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -201,28 +211,62 @@ export default function Admin() {
       alert("Failed to delete image. Please try again.");
     } finally {
       setIsUpdating(false);
+      refreshData();
+    }
+  };
+
+  const handleUndeleteImage = async (imageId: string) => {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    const token = localStorage.getItem("token");
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/undelete`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        // Remove reports for this image
+        setReports((prev) => prev.filter((r) => r.imageId !== imageId));
+        console.log("Image restored successfully!");
+      } else {
+        throw new Error("Failed to restore image");
+      }
+    } catch (error) {
+      console.error("Error restoring image:", error);
+      alert("Failed to restore image. Please try again.");
+    } finally {
+      setIsUpdating(false);
+      refreshData();
+    }
+  };
+
+  const fetchDeletedImages = async () => {
+    const token = localStorage.getItem("token");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/image/deleted`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      console.log("API response for deleted images:", data);
+
+      setDeletedImages(data.content);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleViewUser = (user: AdminUserDTO) => {
     // Navigate to the user's actual profile page
     navigate(`/profile/${user.username}`);
-  };
-
-  const handleToggleUserRole = async (userId: string, role: 'user' | 'admin') => {
-    setIsUpdating(true);
-    try {
-      // In production: await adminAPI.updateUser(userId, { role });
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-
-      setUsers(prev => prev.map(user =>
-        user.id === userId ? { ...user, role } : user
-      ));
-    } catch (error) {
-      console.error('Failed to update user role:', error);
-    } finally {
-      setIsUpdating(false);
-    }
   };
 
   const handleDeleteUser = async (username: string) => {
@@ -439,7 +483,7 @@ export default function Admin() {
 
             {/* Admin Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-xl bg-card/50 border border-border/50">
+              <TabsList className="grid w-full grid-cols-4 max-w-xl bg-card/50 border mx-auto border-border/50">
                 <TabsTrigger value="users" className="data-[state=active]:bg-purple-500/10 data-[state=active]:text-purple-600">
                   <Users className="w-4 h-4 mr-2" />
                   Users
@@ -451,6 +495,10 @@ export default function Admin() {
                 <TabsTrigger value="images" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-600">
                   <Upload className="w-4 h-4 mr-2" />
                   Images
+                </TabsTrigger>
+                <TabsTrigger value="deleted images" className="data-[state=active]:bg-red-500/10 data-[state=active]:text-red-600">
+                  <X className="w-4 h-4 mr-2" />
+                  Deleted Images
                 </TabsTrigger>
               </TabsList>
 
@@ -597,7 +645,7 @@ export default function Admin() {
 
               {/* Reports Tab */}
               <TabsContent value="reports" className="space-y-6">
-                <Card className="border-border/50 bg-card/50">
+                <Card className="border-border/50 bg-card/50 mx-auto max-w-[800px]">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center space-x-2">
@@ -657,11 +705,23 @@ export default function Admin() {
                                     </div>
                                   </div>
                                   <div className="text-sm">
-                                    <span className="font-medium">Description:</span> {report.description}
+                                    <span className="font-medium">Title:</span> {report.title}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
                                     Image ID: {report.imageId} • Reported {new Date(report.timestamp).toLocaleDateString()}
                                   </div>
+
+                                  {report.description && (
+                                    <div className="w-1/3 text-sm text-foreground border-l border-border/30 pl-4">
+                                      <span className="font-medium block mb-1">Description:</span>
+                                      <p className="whitespace-pre-wrap break-words">
+                                        {report.description.length > 500
+                                          ? report.description.slice(0, 500) + "..."
+                                          : report.description}
+                                      </p>
+                                    </div>
+                                  )}
+
                                   <div className="flex items-center space-x-2 pt-2">
                                     {!report.resolved && (
                                       <Button
@@ -890,6 +950,105 @@ export default function Admin() {
                           </div>
                         </CardContent>
                       </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Deleted Images Tab */}
+              <TabsContent value="deleted images" className="space-y-6">
+                <Card className="border-border/50 bg-card/50 mx-auto max-w-[800px]">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center space-x-2">
+                        <Flag className="w-5 h-5 text-yellow-600" />
+                        <span>Deleted Images</span>
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {!deletedImages ? (
+                        <div className="text-center py-8">
+                          <Flag className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">No deleted images</h3>
+                          <p className="text-muted-foreground">No images are deleted.</p>
+                        </div>
+                      ) : (
+                        deletedImages.map((image) => (
+                          <Card key={image.id} className="border border-red-500/20 bg-red-500/5">
+                            <CardContent className="p-4">
+                              <div className="flex items-start space-x-6">
+                                {/* Image */}
+                                <img
+                                  src={image.url}
+                                  alt={`Deleted image ${image.id}`}
+                                  className="w-32 h-32 object-cover rounded-lg border border-border/50"
+                                />
+
+                                {/* Info beside the image */}
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <div>
+                                        <span className="font-medium">Public image ID:</span> {image.id}
+                                      </div>
+                                      <div>
+                                        <span className="font-medium">Image URL:</span> {image.url}
+                                      </div>
+                                    </div>
+                                    <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
+                                      Deleted
+                                    </Badge>
+                                  </div>
+
+                                  <div className="flex items-center space-x-2 pt-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => window.open(image.url, "_blank")}
+                                    >
+                                      <Eye className="w-4 h-4 mr-2" />
+                                      View Full Image
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="border-red-500/30 text-red-600 hover:bg-red-500/10 hover:border-red-500/50"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          Restore Image
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete Image</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to restore this image (ID: {image.id})? This action cannot will return this image back into the image pool.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => handleUndeleteImage(image.id)}
+                                            className="bg-red-600 hover:bg-red-700"
+                                          >
+                                            Restore Image
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>
