@@ -80,7 +80,7 @@ export default function Profile() {
       const totalImages = gameData.batchSize * gameData.batchCount;
 
       return {
-        id: `game-${game.id}`,
+        id: game.id,
         score: game.score,
         gameMode,
         accuracy: gameData.accuracy,
@@ -627,9 +627,15 @@ export default function Profile() {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="font-bold">
-                                    {game.score ?? "Not finished"}
-                                  </div>
+                                  {game.score == null && (
+                                    <Button
+                                      size="sm"
+                                      className="mt-2"
+                                      onClick={() => navigate("/game/" + game.id)}
+                                    >
+                                      Continue
+                                    </Button>
+                                  )}
                                   {game.score != null && (
                                     <div className="text-xs text-muted-foreground">
                                       {game.accuracy.toFixed(1)}%
