@@ -4,10 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Award, BarChart3, Brain, Crown, Medal, Sparkles, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Award, BarChart3, Brain, Crown, Medal, Sparkles, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Leaderboard } from "@/types/Leaderboards";
 import { fetchGlobalLeaderboard } from "@/services/leaderboardsService";
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function Leaderboards() {
   const navigate = useNavigate();
@@ -43,10 +49,12 @@ export default function Leaderboards() {
             : `player-${index}`,
         username: player.username,
         score: player.score,
+        totalGuesses: player.totalGuesses,
+        totalGames: player.totalGames,
+        accuracy: player.accuracy,
         rank: index + 1,
         isCurrentUser: player.username === localStorage.getItem("username"),
       })),
-      totalPlayers: 15847,
       lastUpdated: new Date().toISOString(),
     };
   };
@@ -138,14 +146,14 @@ export default function Leaderboards() {
                 </div>
               </div>
               :
-              <Card className="border-border/50 backdrop-blur-sm bg-card/80">
+              <Card className="border-border/50 backdrop-blur-sm  max-w-[700px] mx-auto bg-card/80">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Trophy className="w-6 h-6 text-human-glow" />
                     <span>Top 10 Global Players by Score</span>
                   </CardTitle>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    
+
                     <span>
                         Updated{" "}
                       {new Date(
@@ -154,6 +162,15 @@ export default function Leaderboards() {
                       </span>
                   </div>
                 </CardHeader>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/20">
+                      <TableHead className="w-20 pl-10 text-left">Position</TableHead>
+                      <TableHead className="text-left pl-16">Username</TableHead>
+                      <TableHead className="text-right pr-10">Score</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                </Table>
                 <CardContent>
                   <div className="space-y-3">
                     {globalLeaderboard.entries.map((entry) => (
@@ -205,17 +222,20 @@ export default function Leaderboards() {
                               </Badge>
                             )}
                           </div>
-                          {/*<div className="text-sm text-muted-foreground">*/}
-                          {/*  {entry.gamesPlayed} games played*/}
-                          {/*</div>*/}
+                          <div className="text-sm text-muted-foreground">
+                           <span> {entry.totalGames} games played </span>
+                          </div>
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold">
                             {entry.score.toLocaleString()}
                           </div>
-                          {/*<div className="text-sm text-muted-foreground">*/}
-                          {/*  {entry.accuracy.toFixed(1)}% accuracy*/}
-                          {/*</div>*/}
+                          <div className="text-sm text-muted-foreground">
+                            {(entry.accuracy * 100).toFixed(1)}% accuracy
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {entry.totalGuesses} guesses
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -24,7 +24,10 @@ export const fetchGlobalLeaderboard = async () => {
   return data.map((entry: any) => {
     if (
       typeof entry.username !== "string" ||
-      typeof entry.score !== "number"
+      typeof entry.score !== "number" ||
+      typeof entry.accuracy !== "number"||
+      typeof entry.totalGames !== "number"||
+      typeof entry.totalGuesses !== "number"
     ) {
       throw new Error("Invalid leaderboard entry format.");
     }
@@ -32,6 +35,9 @@ export const fetchGlobalLeaderboard = async () => {
     return {
       username: entry.username,
       score: entry.score,
+      accuracy: entry.accuracy,
+      totalGames: entry.totalGames,
+      totalGuesses: entry.totalGuesses,
     };
   });
 };

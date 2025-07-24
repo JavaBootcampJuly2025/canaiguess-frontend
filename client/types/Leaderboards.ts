@@ -44,7 +44,9 @@ export interface LeaderboardEntry {
   username: string;
   avatar?: string;
   score: number;
-  accuracy?: number;
+  totalGames: number;
+  totalGuesses: number;
+  accuracy: number;
   rank: number;
   isCurrentUser?: boolean;
 }
@@ -52,7 +54,9 @@ export interface LeaderboardEntry {
 export interface Leaderboard {
   type: LeaderboardType;
   entries: LeaderboardEntry[];
-  totalPlayers: number;
+  totalGames: number;
+  totalGuesses: number;
+  accuracy: number;
   lastUpdated: string;
 }
 export interface AccuracyLeaderboard {
