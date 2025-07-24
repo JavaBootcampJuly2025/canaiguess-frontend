@@ -25,6 +25,8 @@ import {
   AdminUserDTO,
   AdminUserDetailsDTO,
 } from "@/types/Admin";
+import { toast } from "@/components/ui/use-toast";
+import {promoteUserToAdmin} from "@/services/UserService";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -70,11 +72,8 @@ export default function Admin() {
       setIsLoading(true);
       try {
         fetchReports();
-
-        const mockUsers = generateMockUsers();
-
-        setUsers(mockUsers);
-        setTotalUsers(mockUsers.length);
+        await fetchUsers();
+        console.log(localStorage.getItem("token"));
       } catch (error) {
         console.error('Failed to load admin data:', error);
       } finally {
@@ -84,6 +83,53 @@ export default function Admin() {
 
     loadData();
   }, [currentPage, searchQuery]);
+
+  const fetchUsers = async () => {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    const token = localStorage.getItem("token");
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user/all`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Fetched users:", data);
+
+      // If your backend returns Page<UserDTO>, the content is in `content`
+      setUsers(data.content);
+      setTotalUsers(data.totalElements);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePromote = async (username: string) => {
+    
+    const token = localStorage.getItem("token");
+    try {
+      await promoteUserToAdmin(token, username);
+      toast({
+        title: `${username} has been promoted to Admin.`,
+      });
+      // Optionally refresh the user list here!
+    } catch (error) {
+      toast({
+        title: 'Failed to promote user.',
+      });
+      console.error(error);
+    }
+  };
+
 
   const fetchReports = async () => {
     const token = localStorage.getItem("token");
@@ -442,7 +488,6 @@ export default function Admin() {
                             <TableHead>Games</TableHead>
                             <TableHead>Score</TableHead>
                             <TableHead>Accuracy</TableHead>
-                            <TableHead>Joined</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -463,13 +508,8 @@ export default function Admin() {
                               </TableCell>
                               <TableCell>{getRoleBadge(user.role)}</TableCell>
                               <TableCell>{user.totalGames}</TableCell>
-                              <TableCell>{user.totalScore.toLocaleString()}</TableCell>
-                              <TableCell>{user.accuracy}%</TableCell>
-                              <TableCell>
-                                <div className="text-sm">
-                                  {new Date(user.createdAt).toLocaleDateString()}
-                                </div>
-                              </TableCell>
+                              <TableCell>{user.score.toLocaleString()}</TableCell>
+                              <TableCell>{user.accuracy * 100}%</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end space-x-2">
                                   <Button
@@ -506,7 +546,7 @@ export default function Admin() {
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction
-                                          onClick={() => handleToggleUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                                          onClick={() => handlePromote(user.username)}
                                           className={user.role === 'admin' ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-purple-600 hover:bg-purple-700'}
                                         >
                                           {user.role === 'admin' ? 'Remove Admin' : 'Grant Admin'}

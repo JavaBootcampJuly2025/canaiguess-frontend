@@ -114,13 +114,11 @@ export default function LoginPage() {
       if (response.ok) {
         console.log("Registration successful!");
         const token = data.token;
-        const username = data.username;
-        const role = data.username;
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("username", username);
           localStorage.setItem("isGuest", "false");
-          localStorage.setItem("role", role);
+          localStorage.setItem("role", "user");
           navigate("/menu");
         } else {
           alert("Registration succeeded but no token returned.");
