@@ -183,7 +183,7 @@ export default function MainMenu() {
               <User className="w-4 h-4" />
               <span>{username}</span>
             </div>
-            {localStorage.getItem("role") === 'admin' && (
+            {localStorage.getItem("role") === 'ADMIN' && (
               <Button
                 variant="outline"
                 size="sm"

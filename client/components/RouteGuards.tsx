@@ -23,6 +23,6 @@ export function PrivateRoute({ children }: { children: JSX.Element }) {
 // Only admin users allowed
 export function AdminRoute({ children }: { children: JSX.Element }) {
   const role = localStorage.getItem("role");
-  if (role!="admin") return <Navigate to="/menu" replace />;
+  if (role!="ADMIN") return <Navigate to="/menu" replace />;
   return children;
 }
