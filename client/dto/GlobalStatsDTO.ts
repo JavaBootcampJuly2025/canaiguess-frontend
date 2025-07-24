@@ -3,6 +3,7 @@ export interface GlobalStatsDTO {
   globalAccuracy: number;
   totalUsers: number;
   hardestImageId: string;
+  hardestImageUrl: string;
   hardestImageAccuracy: number;
   totalHintsTaken: number;
   totalGamesPlayed: number;

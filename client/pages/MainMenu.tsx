@@ -194,26 +194,36 @@ export default function MainMenu() {
 
       <div className="relative z-10 min-h-screen">
         {/* Header */}
-        <div className="flex justify-between items-center p-6">
-          <div className="flex items-center space-x-4">
+        <div className="flex justify-between items-center p-4 sm:p-6">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <div className="flex items-center space-x-2">
               <div className="relative">
-                <Brain className="w-8 h-8 text-ai-glow" />
-                <Sparkles className="w-4 h-4 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+                <Brain className="w-6 h-6 sm:w-8 sm:h-8 text-ai-glow" />
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-human-glow absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <div
-                className="text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
-                CanAIGuess
+              <div className="text-lg sm:text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+                <span className="hidden xs:inline">CanAIGuess</span>
+                <span className="xs:hidden">CAG</span>
               </div>
             </div>
-            <ThemeToggle />
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* User info - hidden on small screens */}
+            <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
               <User className="w-4 h-4" />
               <span>{username}</span>
             </div>
+
+            {/* Mobile Theme Toggle */}
+            <div className="sm:hidden">
+              <ThemeToggle />
+            </div>
+
+            {/* Admin button - responsive */}
             {localStorage.getItem("role") === "ADMIN" && (
               <Button
                 variant="outline"
@@ -221,28 +231,33 @@ export default function MainMenu() {
                 onClick={() => navigate("/admin")}
                 className="border-red-500/30 text-red-600 hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-600"
               >
-                <Shield className="w-4 h-4 mr-2" />
-                Admin Panel
+                <Shield className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Admin Panel</span>
               </Button>
             )}
-            {localStorage.getItem("isGuest") == "false" && (<Button
+
+            {/* Profile button - responsive */}
+            {localStorage.getItem("isGuest") == "false" && (
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate(`/profile/${username}`)}
                 className="border-border/50"
               >
-                <User className="w-4 h-4 mr-2" />
-                Profile
+                <User className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Profile</span>
               </Button>
             )}
+
+            {/* Logout button - responsive */}
             <Button
               variant="outline"
               size="sm"
               onClick={handleLogout}
               className="border-border/50 hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
@@ -537,6 +552,48 @@ export default function MainMenu() {
                   </div>
                   <div className="text-sm text-muted-foreground">Total Games Played</div>
                 </CardContent>
+              </Card>
+            </div>
+
+            {/* Hardest Image Section */}
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-destructive to-orange-500 bg-clip-text text-transparent">
+                  🔥 Hardest Image to Guess
+                </h3>
+                <p className="text-lg text-muted-foreground">
+                  Only <span className="font-bold text-destructive">
+                    {stats ? (stats.hardestImageAccuracy * 100).toFixed(1) + "%" : "—"}
+                  </span> of players guessed this one correctly!
+                </p>
+              </div>
+
+              <Card
+                className={cn(
+                  "border-2 border-destructive/30 shadow-2xl shadow-destructive/20 backdrop-blur-sm bg-card/90 overflow-hidden",
+                  "hover:shadow-3xl hover:shadow-destructive/30 hover:border-destructive/50 transition-all duration-500",
+                  "hover:scale-[1.02] transform-gpu"
+                )}
+              >
+                <div className="aspect-[16/10] relative group">
+                  <img
+                    src={stats
+                      ? stats.hardestImageUrl
+                      : ""}
+                    alt="The hardest image to guess in the game"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  {/* Overlay with difficulty indicator */}
+                  <div className="absolute top-4 right-4 bg-destructive/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    Expert Level
+                  </div>
+                  {/* Bottom gradient overlay for better text visibility */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent h-20"></div>
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <p className="text-sm font-medium opacity-90">Think you can do better?</p>
+                  </div>
+                </div>
               </Card>
             </div>
 
