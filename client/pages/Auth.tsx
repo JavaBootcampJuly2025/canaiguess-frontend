@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Bot, Brain, Eye, EyeOff, Sparkles, User, Zap, UserCheck, Shield, Check, } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -186,11 +187,13 @@ export default function LoginPage() {
       alert('CAPTCHA verification error. Please try again.');
     }
   };
-
-
-
+  
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute top-6 left-6 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-ai-glow/20 rounded-full blur-3xl animate-pulse"></div>

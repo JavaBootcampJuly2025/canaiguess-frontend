@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,14 +15,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -35,41 +26,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Brain,
-  Sparkles,
-  ArrowLeft,
-  Shield,
-  Users,
-  Search,
-  Eye,
-  Trash2,
-  UserX,
-  UserCheck,
-  Crown,
-  Activity,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Filter,
-  MoreVertical,
-  Calendar,
-  Globe,
-  Mail,
-  Clock,
-  BarChart3,
-  Database,
-  Flag,
-  Upload,
-  X,
-  RefreshCw,
-  Image,
+  Brain, Sparkles, ArrowLeft, Shield, Users, Search, Eye, Trash2, Crown, AlertTriangle, CheckCircle, Filter,
+  Flag, Upload, X, RefreshCw, Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AdminUserDTO,
-  AdminUserListResponseDTO,
   AdminUserDetailsDTO,
-  AdminDashboardStatsDTO,
 } from "@/types/Admin";
 
 export default function Admin() {
@@ -110,64 +73,6 @@ export default function Admin() {
     }));
   };
 
-  const generateMockReports = () => [
-    {
-      id: 1,
-      imageId: "img-001",
-      imageUrl: "https://picsum.photos/300/200?random=1",
-      username: "user123",
-      description: "This image contains inappropriate content",
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      resolved: false,
-    },
-    {
-      id: 2,
-      imageId: "img-005",
-      imageUrl: "https://picsum.photos/300/200?random=5",
-      username: "player456",
-      description: "Suspected AI generation artifacts are incorrect",
-      timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      resolved: false,
-    },
-    {
-      id: 3,
-      imageId: "img-012",
-      imageUrl: "https://picsum.photos/300/200?random=12",
-      username: "detector789",
-      description: "Image appears to be misclassified",
-      timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      resolved: true,
-    },
-  ];
-
-  const generateMockUserDetails = (user: AdminUserDTO): AdminUserDetailsDTO => ({
-    ...user,
-    firstName: `First${user.id.split('-')[1]}`,
-    lastName: `Last${user.id.split('-')[1]}`,
-    bio: `Bio for ${user.username}`,
-    location: "San Francisco, CA",
-    website: `https://${user.username}.com`,
-    timezone: "America/Los_Angeles",
-    language: "en",
-    loginHistory: Array.from({ length: 5 }, (_, i) => ({
-      timestamp: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-      ipAddress: `192.168.1.${100 + i}`,
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      location: "San Francisco, CA",
-      success: Math.random() > 0.1,
-    })),
-    gameHistory: Array.from({ length: 10 }, (_, i) => ({
-      gameId: `game-${i + 1}`,
-      createdAt: new Date(Date.now() - i * 2 * 24 * 60 * 60 * 1000).toISOString(),
-      score: Math.floor(Math.random() * 1000),
-      accuracy: Math.round((60 + Math.random() * 35) * 10) / 10,
-      totalImages: 20,
-      correctGuesses: Math.floor(12 + Math.random() * 8),
-      difficulty: Math.floor(Math.random() * 4) + 1,
-      finished: Math.random() > 0.2,
-    })),
-  });
-
   // Load data
   useEffect(() => {
     const loadData = async () => {
@@ -188,8 +93,6 @@ export default function Admin() {
 
     loadData();
   }, [currentPage, searchQuery]);
-
-
 
   const fetchReports = async () => {
     const token = localStorage.getItem("token");
@@ -218,7 +121,7 @@ export default function Admin() {
     const token = localStorage.getItem("token");
     setIsUpdating(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}/resolve`, {
+      await fetch(`${API_BASE_URL}/api/reports/${reportId}/resolve`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -238,7 +141,31 @@ export default function Admin() {
     }
   };
 
-
+  const handleDeleteImage = async (imageId: string) => {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    const token = localStorage.getItem("token");
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/image/${imageId}/delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        // Remove reports for this image
+        setReports((prev) => prev.filter((r) => r.imageId !== imageId));
+        console.log("Image deleted successfully!");
+      } else {
+        throw new Error("Failed to delete image");
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      alert("Failed to delete image. Please try again.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleViewUser = (user: AdminUserDTO) => {
     // Navigate to the user's actual profile page
@@ -272,7 +199,6 @@ export default function Admin() {
         },
         credentials: "include",
       });
-      const data = await response.json();
       if (response.ok) {
         console.log("User deleted!");
       }
@@ -283,42 +209,6 @@ export default function Admin() {
       setIsUpdating(false);
     }
   };
-
-  const handleImageUpload = async (files: FileList) => {
-    if (!files.length) return;
-
-    setIsUploadingImage(true);
-
-    try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
-      const token = localStorage.getItem("token");
-
-      const formData = new FormData();
-      formData.append("file", files[0]); // Or loop if you support multiple
-      formData.append("fake", "true");   // Or false — adjust as needed
-
-      const response = await fetch(`${API_BASE_URL}/api/image/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Do NOT set Content-Type manually for FormData
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`);
-      }
-
-      alert(`Successfully uploaded ${files.length} image(s) to the game pool.`);
-    } catch (error) {
-      console.error("Failed to upload images:", error);
-      alert("Failed to upload images. Please try again.");
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
 
   const removeFile = (fileName: string) => {
     setSelectedFiles(prev => prev.filter(file => file.name !== fileName));
@@ -603,15 +493,40 @@ export default function Admin() {
                                   >
                                     <Eye className="w-4 h-4" />
                                   </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleToggleUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                                    disabled={isUpdating}
-                                    className="hover:bg-purple-500/10"
-                                  >
-                                    <Crown className="w-4 h-4" />
-                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={isUpdating}
+                                        className="hover:bg-purple-500/10"
+                                      >
+                                        <Crown className="w-4 h-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          {user.role === 'admin' ? 'Remove Admin Rights' : 'Grant Admin Rights'}
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {user.role === 'admin'
+                                            ? `Are you sure you want to remove admin privileges from ${user.username}? They will lose access to the admin panel and administrative functions.`
+                                            : `Are you sure you want to grant admin privileges to ${user.username}? They will gain access to the admin panel and all administrative functions.`
+                                          }
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleToggleUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                                          className={user.role === 'admin' ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-purple-600 hover:bg-purple-700'}
+                                        >
+                                          {user.role === 'admin' ? 'Remove Admin' : 'Grant Admin'}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <Button
@@ -738,6 +653,35 @@ export default function Admin() {
                                       <Eye className="w-4 h-4 mr-2" />
                                       View Full Image
                                     </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="border-red-500/30 text-red-600 hover:bg-red-500/10 hover:border-red-500/50"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          Delete Image
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete Image</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to permanently delete this image (ID: {report.imageId})? This action cannot be undone and will remove the image from the database.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => handleDeleteImage(report.imageId)}
+                                            className="bg-red-600 hover:bg-red-700"
+                                          >
+                                            Delete Image
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                   </div>
                                 </div>
                               </div>
@@ -925,8 +869,6 @@ export default function Admin() {
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }
