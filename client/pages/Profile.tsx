@@ -24,6 +24,12 @@ import { fetchGameData, fetchLastGames } from "@/services/gameService";
 import { fetchUserStats } from "@/services/UserService";
 import { UserDTO } from "@/dto/UserDTO";
 import { UpdateUserRequestDTO } from "@/dto/UserUpdateRequestDTO";
+import {
+  AlertDialog, AlertDialogAction,
+  AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -41,6 +47,8 @@ export default function Profile() {
   const personalPromise = useRef<Promise<void> | null>(null);
 
   const [currentTab, setCurrentTab] = useState("score");
+
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -141,6 +149,34 @@ export default function Profile() {
     if (!profile) return;
     setIsSaving(true);
     setIsSaving(false);
+  };
+
+  const handleDeleteUser = async (username: string) => {
+    const token = localStorage.getItem("token");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user/${username}/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
+      if (response.ok) {
+        console.log("User deleted!");
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("role");
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Deletion failed:", err.errorCode);
+      alert("Something went wrong. See console.");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handlePasswordChange = async () => {
@@ -621,6 +657,35 @@ export default function Profile() {
                   </div>}
               </TabsContent>
             </Tabs>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hover:bg-red-500/10 text-red-600"
+                >
+                  <Lock className="w-4 h-4" />
+                  Delete Profile
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete your account, {username}? This action cannot be undone and will permanently remove your account and all associated data!
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteUser(username)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete User
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>
