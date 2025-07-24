@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,16 +22,16 @@ import {
   Images,
   LogOut,
   Play,
+  Shield,
   Sparkles,
   Target,
   Trophy,
   User,
   Zap,
-  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NewGameResponseDTO } from "@/dto/NewGameResponseDTO";
 import { createNewGame } from "@/services/gameService";
+import { GlobalStatsDTO } from "@/dto/GlobalStatsDTO";
 
 export default function MainMenu() {
   // Default values for new game
@@ -44,7 +44,10 @@ export default function MainMenu() {
   const navigate = useNavigate();
   const username = localStorage.getItem("username");
   const isGuest = localStorage.getItem("isGuest") === "true";
-  const [gameMode, setGameMode] = useState("1"); // new state
+  const [gameMode, setGameMode] = useState("1");
+
+  const [stats, setStats] = useState<GlobalStatsDTO | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleStartGame = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +73,34 @@ export default function MainMenu() {
     }
   };
 
+  useEffect(() => {
+    // Always start background loads right away:
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_FALLBACK;
+      const response = await fetch(`${API_BASE_URL}/api/global/stats`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch global stats");
+      }
+      const data: GlobalStatsDTO = await response.json();
+      console.log(data);
+      setStats(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -183,7 +214,7 @@ export default function MainMenu() {
               <User className="w-4 h-4" />
               <span>{username}</span>
             </div>
-            {localStorage.getItem("role") === 'ADMIN' && (
+            {localStorage.getItem("role") === "ADMIN" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -467,39 +498,44 @@ export default function MainMenu() {
                 </Card>
               )}
             </div>
-
+            
             {/* Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
               <Card className="border-border/50 backdrop-blur-sm bg-card/80 text-center">
                 <CardContent className="pt-6">
-                  <div className="text-2xl font-bold text-ai-glow">127K</div>
-                  <div className="text-sm text-muted-foreground">
-                    Images Tested
+                  <div className="text-2xl font-bold text-ai-glow">
+                    {stats?.totalImages?.toLocaleString() ?? "—"}
                   </div>
+                  <div className="text-sm text-muted-foreground">Images In Game</div>
                 </CardContent>
               </Card>
+
               <Card className="border-border/50 backdrop-blur-sm bg-card/80 text-center">
                 <CardContent className="pt-6">
-                  <div className="text-2xl font-bold text-human-glow">89%</div>
-                  <div className="text-sm text-muted-foreground">
-                    Global Avg
+                  <div className="text-2xl font-bold text-human-glow">
+                    {stats ? (stats.globalAccuracy * 100).toFixed(1) + "%" : "—"}
                   </div>
+                  <div className="text-sm text-muted-foreground">Global Average Accuracy</div>
                 </CardContent>
               </Card>
+
               <Card className="border-border/50 backdrop-blur-sm bg-card/80 text-center">
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-neural-purple">
-                    42K
+                    {stats?.totalUsers?.toLocaleString() ?? "—"}
                   </div>
                   <div className="text-sm text-muted-foreground">Players</div>
                 </CardContent>
               </Card>
+
               <Card className="border-border/50 backdrop-blur-sm bg-card/80 text-center">
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-electric-blue">
-                    95%
+                    {stats
+                      ? (stats.hardestImageAccuracy * 100).toFixed(1) + "%"
+                      : "—"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Your Best</div>
+                  <div className="text-sm text-muted-foreground">Hardest Image Accuracy</div>
                 </CardContent>
               </Card>
             </div>
