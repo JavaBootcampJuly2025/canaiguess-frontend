@@ -532,10 +532,10 @@ export default function MainMenu() {
                 <CardContent className="pt-6">
                   <div className="text-2xl font-bold text-electric-blue">
                     {stats
-                      ? (stats.hardestImageAccuracy * 100).toFixed(1) + "%"
+                      ? stats.totalGamesPlayed
                       : "—"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Hardest Image Accuracy</div>
+                  <div className="text-sm text-muted-foreground">Total Games Played</div>
                 </CardContent>
               </Card>
             </div>
