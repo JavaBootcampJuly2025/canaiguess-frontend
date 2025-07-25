@@ -49,25 +49,6 @@ export default function Admin() {
 
   const [deletedImages, setDeletedImages] = useState([]);
 
-  // Mock data generation for development
-  const generateMockUsers = (): AdminUserDTO[] => {
-    const roles: Array<'user' | 'admin'> = ['user', 'admin'];
-
-    return Array.from({ length: 15 }, (_, i) => ({
-      id: `user-${i + 1}`,
-      username: `user${i + 1}`,
-      email: `user${i + 1}@example.com`,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=user${i + 1}`,
-      isEmailVerified: Math.random() > 0.2,
-      createdAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-      lastLoginAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      totalGames: Math.floor(Math.random() * 200),
-      totalScore: Math.floor(Math.random() * 10000),
-      accuracy: Math.round((60 + Math.random() * 35) * 10) / 10,
-      role: roles[Math.floor(Math.random() * roles.length)],
-    }));
-  };
-
   const [dataVersion, setDataVersion] = useState(0); // 🆕
 
   const refreshData = () => {
@@ -137,6 +118,7 @@ export default function Admin() {
       });
       console.error(error);
     }
+    refreshData();
   };
 
 
@@ -290,6 +272,7 @@ export default function Admin() {
       alert("Something went wrong. See console.");
     } finally {
       setIsUpdating(false);
+      refreshData();
     }
   };
 
@@ -390,8 +373,8 @@ export default function Admin() {
     }
   };
 
-  const getRoleBadge = (role: 'user' | 'admin') => {
-    return role === 'admin' ? (
+  const getRoleBadge = (role: 'USER' | 'ADMIN') => {
+    return role === 'ADMIN' ? (
       <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">
         <Crown className="w-3 h-3 mr-1" />
         Admin

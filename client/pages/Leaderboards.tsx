@@ -209,21 +209,6 @@ export default function Leaderboards() {
                               >
                                 {entry.username}
                               </span>
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                {entry.isCurrentUser && (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs border-ai-glow/50 text-ai-glow"
-                                  >
-                                    You
-                                  </Badge>
-                                )}
-                                {entry.rank <= 3 && (
-                                  <Badge className="text-xs bg-human-glow/20 text-human-glow border-human-glow/30">
-                                    Top 3
-                                  </Badge>
-                                )}
-                              </div>
                           </div>
                           <div className="text-xs sm:text-sm text-muted-foreground">
                            <span> {entry.totalGames} games played </span>

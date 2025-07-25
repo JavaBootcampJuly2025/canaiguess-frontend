@@ -5,4 +5,5 @@ export interface UserDTO {
   totalGuesses: number;    // all guesses ever
   correctGuesses: number;  // all correct guesses ever
   totalGames: number;      // total games played
+  role: string;
 }
