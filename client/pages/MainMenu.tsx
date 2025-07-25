@@ -202,8 +202,7 @@ export default function MainMenu() {
                 <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-human-glow absolute -top-1 -right-1 animate-pulse" />
               </div>
               <div className="text-lg sm:text-xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
-                <span className="hidden xs:inline">CanAIGuess</span>
-                <span className="xs:hidden">CAG</span>
+                CanAIGuess
               </div>
             </div>
             <div className="hidden sm:block">

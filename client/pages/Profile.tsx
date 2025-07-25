@@ -301,95 +301,96 @@ export default function Profile() {
 
       <div className="relative z-10 min-h-screen">
         {/* Header */}
-        <div className="flex justify-between items-center p-6">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate("/menu")}
               className="border-border/50"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Menu
+              <ArrowLeft className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Back to Menu</span>
             </Button>
             <div className="flex items-center space-x-2">
               <div className="relative">
-                <Brain className="w-6 h-6 text-ai-glow" />
-                <Sparkles className="w-3 h-3 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-ai-glow" />
+                <Sparkles className="w-2 h-2 sm:w-3 sm:h-3 text-human-glow absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <div className="text-lg font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+              <div className="text-base sm:text-lg font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
                 CanAIGuess
               </div>
             </div>
           </div>
           <Badge variant="outline" className="border-ai-glow/30 text-ai-glow">
-            <User className="w-4 h-4 mr-2" />
-            Profile
+            <User className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Profile</span>
           </Badge>
         </div>
 
         {/* Main Content */}
-        <div className="px-6 pb-12">
-          <div className="max-w-4xl mx-auto space-y-8">
+        <div className="px-4 sm:px-6 pb-8 sm:pb-12">
+          <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
             {/* Profile Header */}
-            <div className="text-center space-y-6">
+            <div className="text-center space-y-4 sm:space-y-6">
               <div className="relative inline-block">
               </div>
               <div>
-                <h1 className="text-3xl font-bold">Welcome to your profile, {username}!</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Welcome to your profile, {username}!</h1>
               </div>
             </div>
 
             {/* Quick Stats Overview */}
             <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
                   <span className="flex items-center space-x-2">
                     <BarChart3 className="w-5 h-5 text-ai-glow" />
-                    <span>Quick Stats</span>
+                    <span className="text-base sm:text-lg">Quick Stats</span>
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate("/leaderboards")}
-                    className="border-human-glow/30 hover:bg-human-glow/10"
+                    className="border-human-glow/30 hover:bg-human-glow/10 text-sm"
                   >
-                    <Trophy className="w-4 h-4 mr-2" />
-                    View Global Leaderboard
+                    <Trophy className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">View Global Leaderboard</span>
+                    <span className="sm:hidden">Leaderboard</span>
                   </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 rounded-lg bg-ai-glow/10">
-                    <div className="text-2xl font-bold text-ai-glow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="text-center p-3 sm:p-4 rounded-lg bg-ai-glow/10">
+                    <div className="text-xl sm:text-2xl font-bold text-ai-glow">
                       {userStats.score}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       Total Score
                     </div>
                   </div>
-                  <div className="text-center p-4 rounded-lg bg-human-glow/10">
-                    <div className="text-2xl font-bold text-human-glow">
+                  <div className="text-center p-3 sm:p-4 rounded-lg bg-human-glow/10">
+                    <div className="text-xl sm:text-2xl font-bold text-human-glow">
                       {userStats.totalGuesses.toLocaleString()}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       Total Guesses
                     </div>
                   </div>
-                  <div className="text-center p-4 rounded-lg bg-neural-purple/10">
-                    <div className="text-2xl font-bold text-neural-purple">
+                  <div className="text-center p-3 sm:p-4 rounded-lg bg-neural-purple/10">
+                    <div className="text-xl sm:text-2xl font-bold text-neural-purple">
                       {(userStats.accuracy * 100).toFixed(1)}%
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       Accuracy
                     </div>
                   </div>
-                  <div className="text-center p-4 rounded-lg bg-electric-blue/10">
-                    <div className="text-2xl font-bold text-electric-blue">
+                  <div className="text-center p-3 sm:p-4 rounded-lg bg-electric-blue/10">
+                    <div className="text-xl sm:text-2xl font-bold text-electric-blue">
                       {userStats.totalGames}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       Games Played
                     </div>
                   </div>
@@ -400,36 +401,39 @@ export default function Profile() {
             {/* Profile Tabs */}
             <Tabs defaultValue="account" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="account">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Account
+                <TabsTrigger value="account" className="text-sm sm:text-base">
+                  <Settings className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Account</span>
+                  <span className="sm:hidden">Settings</span>
                 </TabsTrigger>
-                <TabsTrigger value="lastGames">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Last Games
+                <TabsTrigger value="lastGames" className="text-sm sm:text-base">
+                  <Shield className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Last Games</span>
+                  <span className="sm:hidden">Games</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* Account Tab */}
-              <TabsContent value="account" className="space-y-6">
+              <TabsContent value="account" className="space-y-4 sm:space-y-6">
                 <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-                  <CardHeader>
-                    <CardTitle>Account Settings</CardTitle>
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Account Settings</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
+                  <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+                    <div className="space-y-3 sm:space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="username">Email Address</Label>
-                        <div className="flex space-x-2">
+                        <Label htmlFor="username" className="text-sm sm:text-base">Email Address</Label>
+                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                           <Input
                             id="email"
                             type="email"
                             onChange={(e) =>
                               setEmail(e.target.value)}
-                            className="bg-background/50"
+                            className="bg-background/50 text-sm sm:text-base"
                           />
                           <Button variant="outline"
-                                  onClick={() => handleUpdateField("email")}>
+                                  onClick={() => handleUpdateField("email")}
+                                  className="text-sm sm:text-base">
                             Change
                           </Button>
                         </div>
@@ -437,13 +441,13 @@ export default function Profile() {
 
                       <Separator />
 
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">
+                      <div className="space-y-3 sm:space-y-4">
+                        <h3 className="text-base sm:text-lg font-semibold">
                           Change Password
                         </h3>
-                        <div className="space-y-4">
+                        <div className="space-y-3 sm:space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="currentPassword">
+                            <Label htmlFor="currentPassword" className="text-sm sm:text-base">
                               Current Password
                             </Label>
                             <div className="relative">
@@ -457,7 +461,7 @@ export default function Profile() {
                                     currentPassword: e.target.value,
                                   })
                                 }
-                                className="bg-background/50 pr-10"
+                                className="bg-background/50 pr-10 text-sm sm:text-base"
                               />
                               <Button
                                 type="button"
@@ -477,7 +481,7 @@ export default function Profile() {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="newPassword">New Password</Label>
+                            <Label htmlFor="newPassword" className="text-sm sm:text-base">New Password</Label>
                             <div className="relative">
                               <Input
                                 id="newPassword"
@@ -489,7 +493,7 @@ export default function Profile() {
                                     newPassword: e.target.value,
                                   })
                                 }
-                                className="bg-background/50 pr-10"
+                                className="bg-background/50 pr-10 text-sm sm:text-base"
                               />
                               <Button
                                 type="button"
@@ -509,7 +513,7 @@ export default function Profile() {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="confirmNewPassword">
+                            <Label htmlFor="confirmNewPassword" className="text-sm sm:text-base">
                               Confirm New Password
                             </Label>
                             <Input
@@ -522,7 +526,7 @@ export default function Profile() {
                                   confirmPassword: e.target.value,
                                 })
                               }
-                              className="bg-background/50"
+                              className="bg-background/50 text-sm sm:text-base"
                             />
                           </div>
                           <Button
@@ -534,10 +538,11 @@ export default function Profile() {
                               passwordForm.confirmPassword ||
                               isSaving
                             }
-                            className="bg-gradient-to-r from-human-glow to-cyber-green hover:from-human-glow/90 hover:to-cyber-green/90"
+                            className="w-full sm:w-auto text-sm sm:text-base bg-gradient-to-r from-human-glow to-cyber-green hover:from-human-glow/90 hover:to-cyber-green/90"
                           >
-                            <Lock className="w-4 h-4 mr-2" />
-                            Update Password
+                            <Lock className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Update Password</span>
+                            <span className="sm:hidden">Update</span>
                           </Button>
                         </div>
                       </div>
@@ -547,13 +552,13 @@ export default function Profile() {
               </TabsContent>
 
               {/* Personal Statistics Tab */}
-              <TabsContent value="lastGames" className="space-y-6">
+              <TabsContent value="lastGames" className="space-y-4 sm:space-y-6">
                 {/* User Stats Overview */}
                 {isPersonalLoading  ?
-                  <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-48 sm:h-64">
                     <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 border-2 border-ai-glow/30 border-t-ai-glow rounded-full animate-spin" />
-                      <span className="text-muted-foreground">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-ai-glow/30 border-t-ai-glow rounded-full animate-spin" />
+                      <span className="text-sm sm:text-base text-muted-foreground">
                     Loading your statistics...
                   </span>
                     </div>
@@ -562,29 +567,29 @@ export default function Profile() {
                   <div>
 
                     {/* Mode Performance and Recent Games */}
-                    <div className="grid lg:grid-cols-1 gap-6">
+                    <div className="grid lg:grid-cols-1 gap-4 sm:gap-6">
                       {/* Recent Games History */}
                       <Card className="border-border/50 backdrop-blur-sm bg-card/80">
-                        <CardHeader>
+                        <CardHeader className="p-4 sm:p-6">
                           <CardTitle className="flex items-center space-x-2">
                             <Clock className="w-5 h-5 text-human-glow" />
-                            <span>Recent Games</span>
+                            <span className="text-base sm:text-lg">Recent Games</span>
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3 max-h-80 overflow-y-auto">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="space-y-2 sm:space-y-3 max-h-64 sm:max-h-80 overflow-y-auto">
                             {recentGames.map((game) => (
                               <div
                                 key={game.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors"
+                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors space-y-2 sm:space-y-0"
                               >
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-3 w-full sm:w-auto">
                                   <div className="flex-shrink-0">
                                     {getGameModeIcon(game.gameMode)}
                                   </div>
-                                  <div>
-                                    <div className="flex items-center space-x-2">
-                                  <span className="font-medium capitalize">
+                                  <div className="flex-1">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                                  <span className="font-medium text-sm sm:text-base capitalize">
                                     {game.gameMode}
                                   </span>
                                       <Badge className={cn("text-xs capitalize", getDifficultyColor(game.difficulty))}>
@@ -597,11 +602,11 @@ export default function Profile() {
                                     </div>
                                   </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right w-full sm:w-auto">
                                   {game.score == null && (
                                     <Button
                                       size="sm"
-                                      className="mt-2"
+                                      className="w-full sm:w-auto text-sm"
                                       onClick={() => navigate("/game/" + game.id)}
                                     >
                                       Continue
@@ -627,10 +632,11 @@ export default function Profile() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hover:bg-red-500/10 text-red-600"
+                  className="w-full sm:w-auto text-sm sm:text-base hover:bg-red-500/10 text-red-600"
                 >
-                  <Lock className="w-4 h-4" />
-                  Delete Profile
+                  <Lock className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Delete Profile</span>
+                  <span className="sm:hidden">Delete Account</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>

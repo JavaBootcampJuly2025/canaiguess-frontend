@@ -444,23 +444,23 @@ export default function Admin() {
       <div className="relative z-10 min-h-screen">
         {/* Header */}
         <div className="border-b border-border/50 bg-card/20 backdrop-blur-sm">
-          <div className="flex justify-between items-center p-6">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 sm:p-6">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/menu")}
                 className="border-border/50 hover:bg-destructive/10 hover:border-destructive/50"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Exit Admin
+                <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exit Admin</span>
               </Button>
               <div className="flex items-center space-x-2">
                 <div className="relative">
-                  <Brain className="w-6 h-6 text-red-500" />
-                  <Shield className="w-3 h-3 text-purple-500 absolute -top-1 -right-1" />
+                  <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+                  <Shield className="w-2 h-2 sm:w-3 sm:h-3 text-purple-500 absolute -top-1 -right-1" />
                 </div>
-                <div className="text-lg font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
+                <div className="text-base sm:text-lg font-bold bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
                   CanAIGuess Admin
                 </div>
               </div>
@@ -469,68 +469,68 @@ export default function Admin() {
         </div>
 
         {/* Main Content */}
-        <div className="p-6">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <div className="p-4 sm:p-6">
+          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Page Title */}
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
                 Administrative Control Panel
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Manage users, monitor system health, and oversee platform operations
               </p>
             </div>
 
             {/* Admin Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 max-w-xl bg-card/50 border mx-auto border-border/50">
-                <TabsTrigger value="users" className="data-[state=active]:bg-purple-500/10 data-[state=active]:text-purple-600">
-                  <Users className="w-4 h-4 mr-2" />
-                  Users
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-xl bg-card/50 border mx-auto border-border/50">
+                <TabsTrigger value="users" className="data-[state=active]:bg-purple-500/10 data-[state=active]:text-purple-600 text-xs sm:text-sm">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Users</span>
                 </TabsTrigger>
-                <TabsTrigger value="reports" className="data-[state=active]:bg-yellow-500/10 data-[state=active]:text-yellow-600">
-                  <Flag className="w-4 h-4 mr-2" />
-                  Reports
+                <TabsTrigger value="reports" className="data-[state=active]:bg-yellow-500/10 data-[state=active]:text-yellow-600 text-xs sm:text-sm">
+                  <Flag className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Reports</span>
                 </TabsTrigger>
-                <TabsTrigger value="images" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-600">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Images
+                <TabsTrigger value="images" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-600 text-xs sm:text-sm">
+                  <Upload className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Images</span>
                 </TabsTrigger>
-                <TabsTrigger value="deleted images" className="data-[state=active]:bg-red-500/10 data-[state=active]:text-red-600">
-                  <X className="w-4 h-4 mr-2" />
-                  Deleted Images
+                <TabsTrigger value="deleted images" className="data-[state=active]:bg-red-500/10 data-[state=active]:text-red-600 text-xs sm:text-sm">
+                  <X className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Deleted</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* Users Tab */}
               <TabsContent value="users" className="space-y-6">
                 <Card className="border-border/50 bg-card/50">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                  <CardHeader className="p-4 sm:p-6">
+                    <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
                       <CardTitle className="flex items-center space-x-2">
-                        <Users className="w-5 h-5 text-purple-600" />
-                        <span>User Management</span>
+                        <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                        <span className="text-base sm:text-lg">User Management</span>
                       </CardTitle>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                         <div className="relative">
                           <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                           <Input
                             placeholder="Search users..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 w-64 bg-background/50"
+                            className="pl-10 w-full sm:w-64 bg-background/50 text-sm"
                           />
                         </div>
-                        <Button variant="outline" size="sm">
-                          <Filter className="w-4 h-4 mr-2" />
-                          Filter
+                        <Button variant="outline" size="sm" className="text-sm">
+                          <Filter className="w-4 h-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Filter</span>
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg border border-border/50 overflow-hidden">
-                      <Table>
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="rounded-lg border border-border/50 overflow-x-auto">
+                      <Table className="min-w-[600px]">
                         <TableHeader>
                           <TableRow className="bg-muted/20">
                             <TableHead>User</TableHead>

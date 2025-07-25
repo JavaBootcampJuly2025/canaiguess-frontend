@@ -89,25 +89,24 @@ export default function GameOver({ }) {
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="text-center space-y-8 max-w-md">
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4 sm:p-6">
+        <div className="text-center space-y-6 sm:space-y-8 max-w-xs sm:max-w-md">
           {/* Logo matching login page */}
-          <div className="flex items-center justify-center space-x-2 mb-6">
+          <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
             <div className="relative">
-              <Brain className="w-12 h-12 text-ai-glow" />
-              <Sparkles className="w-6 h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+              <Brain className="w-8 h-8 sm:w-12 sm:h-12 text-ai-glow" />
+              <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
             </div>
-            <div className="text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+            <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
               CanAIGuess
             </div>
           </div>
 
           {/* 404 Content */}
           <div className="space-y-4">
-            <div className="text-6xl font-bold bg-gradient-to-r from-neural-purple to-electric-blue bg-clip-text text-transparent">
+            <div className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-neural-purple to-electric-blue bg-clip-text text-transparent">
               Asking AI how you did...
             </div>
-            <h1 className="text-2xl font-bold"></h1>
           </div>
 
           {/* Fun stats */}
@@ -127,16 +126,16 @@ export default function GameOver({ }) {
           className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-human-glow/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl border-border/50 backdrop-blur-sm bg-card/80">
-          <CardContent className="p-8 text-center space-y-6">
-            <div className="flex items-center justify-center space-x-2 mb-6">
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-6">
+        <Card className="w-full max-w-xs sm:max-w-lg lg:max-w-2xl border-border/50 backdrop-blur-sm bg-card/80">
+          <CardContent className="p-4 sm:p-6 lg:p-8 text-center space-y-4 sm:space-y-6">
+            <div className="flex items-center justify-center space-x-2 mb-4 sm:mb-6">
               <div className="relative">
-                <Brain className="w-12 h-12 text-ai-glow" />
-                <Sparkles className="w-6 h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
+                <Brain className="w-8 h-8 sm:w-12 sm:h-12 text-ai-glow" />
+                <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-human-glow absolute -top-1 -right-1 animate-pulse" />
               </div>
               <div
-                className="text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
+                className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-ai-glow to-human-glow bg-clip-text text-transparent">
                 CanAIGuess
               </div>
             </div>
@@ -145,44 +144,44 @@ export default function GameOver({ }) {
               <div className="flex items-center justify-center">
                 <Trophy className="w-16 h-16 text-human-glow" />
               </div>
-              <h1 className="text-3xl font-bold">Game Complete!</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl sm:text-3xl font-bold">Game Complete!</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 You've completed your neural detection challenge
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-ai-glow/10 border border-ai-glow/20">
-                <div className="text-2xl font-bold text-ai-glow">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 rounded-lg bg-ai-glow/10 border border-ai-glow/20">
+                <div className="text-xl sm:text-2xl font-bold text-ai-glow">
                   {result ? result.correct : "Loading..."}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs sm:text-sm text-muted-foreground">
                   Correct Guesses
                 </div>
               </div>
-              <div className="p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
-                <div className="text-2xl font-bold text-human-glow">
+              <div className="p-3 sm:p-4 rounded-lg bg-human-glow/10 border border-human-glow/20">
+                <div className="text-xl sm:text-2xl font-bold text-human-glow">
                   {result ? (result.accuracy)
                     .toFixed(1) + "%" : "Loading..."}
                 </div>
-                <div className="text-sm text-muted-foreground">Accuracy</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Accuracy</div>
               </div>
             </div>
 
-            <div className="p-6 rounded-lg bg-neural-purple/10 border border-neural-purple/20">
-              <div className="text-3xl font-bold text-neural-purple mb-2">
+            <div className="p-4 sm:p-6 rounded-lg bg-neural-purple/10 border border-neural-purple/20">
+              <div className="text-2xl sm:text-3xl font-bold text-neural-purple mb-2">
                 {result.score}
               </div>
-              <div className="text-lg font-medium">Final Score</div>
-              <div className="text-sm text-muted-foreground mt-1">
+              <div className="text-base sm:text-lg font-medium">Final Score</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-1">
                 You went through {gameConfig.batchSize * gameConfig.batchCount} total images
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Button
                 onClick={() => navigate("/menu")}
-                className="flex-1 bg-gradient-to-r from-ai-glow to-electric-blue hover:from-ai-glow/90 hover:to-electric-blue/90"
+                className="flex-1 text-sm sm:text-base bg-gradient-to-r from-ai-glow to-electric-blue hover:from-ai-glow/90 hover:to-electric-blue/90"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Menu
@@ -190,7 +189,7 @@ export default function GameOver({ }) {
               <Button
                 onClick={handleStartGame}
                 variant="outline"
-                className="flex-1"
+                className="flex-1 text-sm sm:text-base"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Play Again
