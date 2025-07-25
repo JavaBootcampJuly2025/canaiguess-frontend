@@ -1,5 +1,8 @@
 # canaiguess frontend
 
+Demo showcase:
+https://youtu.be/r8REJZ0IzjU
+
 ```bash
 npm install # vite@4 --save-dev
 npm run dev
