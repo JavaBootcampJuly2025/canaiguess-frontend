@@ -537,7 +537,6 @@ export default function Admin() {
                             <TableHead>Role</TableHead>
                             <TableHead>Games</TableHead>
                             <TableHead>Score</TableHead>
-                            <TableHead>Accuracy</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -559,7 +558,6 @@ export default function Admin() {
                               <TableCell>{getRoleBadge(user.role)}</TableCell>
                               <TableCell>{user.totalGames}</TableCell>
                               <TableCell>{user.score.toLocaleString()}</TableCell>
-                              <TableCell>{user.accuracy * 100}%</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end space-x-2">
                                   <Button
