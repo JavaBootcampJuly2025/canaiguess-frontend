@@ -28,6 +28,9 @@ You can try the live app here:
 [https://canaiguess.netlify.app/](https://canaiguess.netlify.app/)
 
 Or run it locally:
+Demo showcase:
+https://youtu.be/r8REJZ0IzjU
+
 ```bash
 npm install
 npm run dev
