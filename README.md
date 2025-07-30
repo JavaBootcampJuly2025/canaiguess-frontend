@@ -2,6 +2,9 @@
 
 **Canaiguess** is a fun and interactive guessing game where players test their skills in identifying AI-generated vs. human-made images. 
 
+Demo showcase:
+https://youtu.be/r8REJZ0IzjU
+
 ## Features
 
 - Three game modes
